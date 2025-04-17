@@ -84,10 +84,6 @@ public class Constants {
     public static final int MAX_RETRIES = 3;
     public static final int RETRY_DELAY_MS = 5000; // 5 seconds
 
-    /**
-     * Add these constants to the Constants.java file
-     */
-
 // Preference keys for custom delay
     public static final String PREF_DELAY_MIN = "delay_min";
     public static final String PREF_DELAY_MAX = "delay_max";

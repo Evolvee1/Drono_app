@@ -1,5 +1,6 @@
 package com.example.imtbf.data.models;
 
+import java.util.Random;
 /**
  * Represents a device profile with all information needed for fingerprinting.
  * This class holds information about the device type, platform, and user agent.
@@ -268,6 +269,7 @@ public class DeviceProfile {
      */
     public static class Builder {
         private final DeviceProfile profile;
+
 
         public Builder() {
             profile = new DeviceProfile();
