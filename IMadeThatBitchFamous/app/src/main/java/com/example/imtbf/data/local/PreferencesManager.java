@@ -1,0 +1,277 @@
+package com.example.imtbf.data.local;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+
+import java.util.UUID;
+
+import com.example.imtbf.utils.Constants;
+
+/**
+ * Manages access to SharedPreferences for storing app settings.
+ * Uses a centralized approach for all preference access.
+ */
+public class PreferencesManager {
+
+    private final SharedPreferences preferences;
+
+    /**
+     * Constructor that initializes SharedPreferences.
+     * @param context Application context
+     */
+    public PreferencesManager(Context context) {
+        preferences = context.getSharedPreferences(
+                Constants.PREF_FILE_NAME, Context.MODE_PRIVATE);
+
+        // Generate a unique device ID if not already generated
+        if (getDeviceId().isEmpty()) {
+            setDeviceId(UUID.randomUUID().toString());
+        }
+    }
+
+    /**
+     * Get an integer preference value
+     * @param key Preference key
+     * @param defaultValue Default value if preference doesn't exist
+     * @return Preference value or default
+     */
+    public int getInt(String key, int defaultValue) {
+        return preferences.getInt(key, defaultValue);
+    }
+
+    /**
+     * Set an integer preference value
+     * @param key Preference key
+     * @param value Value to set
+     */
+    public void setInt(String key, int value) {
+        preferences.edit().putInt(key, value).apply();
+    }
+
+    /**
+     * Get the target URL for simulation.
+     * @return Target URL
+     */
+    public String getTargetUrl() {
+        return preferences.getString(
+                Constants.PREF_TARGET_URL, Constants.DEFAULT_TARGET_URL);
+    }
+
+    /**
+     * Set the target URL for simulation.
+     * @param url Target URL
+     */
+    public void setTargetUrl(String url) {
+        preferences.edit().putString(Constants.PREF_TARGET_URL, url).apply();
+    }
+
+    /**
+     * Get the reading time mean in milliseconds.
+     * @return Reading time mean
+     */
+    public int getReadingTimeMean() {
+        return getInt(Constants.PREF_READING_TIME_MEAN, Constants.DEFAULT_READING_TIME_MEAN_MS);
+    }
+
+    /**
+     * Set the reading time mean in milliseconds.
+     * @param readingTimeMean Reading time mean
+     */
+    public void setReadingTimeMean(int readingTimeMean) {
+        setInt(Constants.PREF_READING_TIME_MEAN, readingTimeMean);
+    }
+
+    /**
+     * Get the reading time standard deviation in milliseconds.
+     * @return Reading time standard deviation
+     */
+    public int getReadingTimeStdDev() {
+        return getInt(Constants.PREF_READING_TIME_STDDEV, Constants.DEFAULT_READING_TIME_STDDEV_MS);
+    }
+
+    /**
+     * Set the reading time standard deviation in milliseconds.
+     * @param readingTimeStdDev Reading time standard deviation
+     */
+    public void setReadingTimeStdDev(int readingTimeStdDev) {
+        setInt(Constants.PREF_READING_TIME_STDDEV, readingTimeStdDev);
+    }
+
+    /**
+     * Get the minimum interval between requests in seconds.
+     * @return Minimum interval in seconds
+     */
+    public int getMinInterval() {
+        return preferences.getInt(
+                Constants.PREF_MIN_INTERVAL, Constants.DEFAULT_MIN_INTERVAL);
+    }
+
+    /**
+     * Set the minimum interval between requests in seconds.
+     * @param seconds Minimum interval in seconds
+     */
+    public void setMinInterval(int seconds) {
+        preferences.edit().putInt(Constants.PREF_MIN_INTERVAL, seconds).apply();
+    }
+
+    /**
+     * Get the maximum interval between requests in seconds.
+     * @return Maximum interval in seconds
+     */
+    public int getMaxInterval() {
+        return preferences.getInt(
+                Constants.PREF_MAX_INTERVAL, Constants.DEFAULT_MAX_INTERVAL);
+    }
+
+    /**
+     * Set the maximum interval between requests in seconds.
+     * @param seconds Maximum interval in seconds
+     */
+    public void setMaxInterval(int seconds) {
+        preferences.edit().putInt(Constants.PREF_MAX_INTERVAL, seconds).apply();
+    }
+
+    /**
+     * Get the number of iterations for the simulation.
+     * @return Number of iterations
+     */
+    public int getIterations() {
+        return preferences.getInt(
+                Constants.PREF_ITERATIONS, Constants.DEFAULT_ITERATIONS);
+    }
+
+    /**
+     * Set the number of iterations for the simulation.
+     * @param iterations Number of iterations
+     */
+    public void setIterations(int iterations) {
+        preferences.edit().putInt(Constants.PREF_ITERATIONS, iterations).apply();
+    }
+
+    /**
+     * Check if a simulation is currently running.
+     * @return True if simulation is running, false otherwise
+     */
+    public boolean isSimulationRunning() {
+        return preferences.getBoolean(Constants.PREF_IS_RUNNING, false);
+    }
+
+    /**
+     * Set the simulation running state.
+     * @param isRunning True if simulation is running, false otherwise
+     */
+    public void setSimulationRunning(boolean isRunning) {
+        preferences.edit().putBoolean(Constants.PREF_IS_RUNNING, isRunning).apply();
+    }
+
+    /**
+     * Get the unique device ID.
+     * @return Device ID
+     */
+    public String getDeviceId() {
+        return preferences.getString(Constants.PREF_DEVICE_ID, "");
+    }
+
+    /**
+     * Set the unique device ID.
+     * @param deviceId Device ID
+     */
+    private void setDeviceId(String deviceId) {
+        preferences.edit().putString(Constants.PREF_DEVICE_ID, deviceId).apply();
+    }
+
+    /**
+     * Check if debug logging is enabled.
+     * @return True if debug logging is enabled, false otherwise
+     */
+    public boolean isDebugLoggingEnabled() {
+        return preferences.getBoolean(Constants.PREF_DEBUG_LOGGING, false);
+    }
+
+    /**
+     * Set whether debug logging is enabled.
+     * @param enabled True to enable debug logging, false to disable
+     */
+    public void setDebugLoggingEnabled(boolean enabled) {
+        preferences.edit().putBoolean(Constants.PREF_DEBUG_LOGGING, enabled).apply();
+    }
+
+    /**
+     * Get the airplane mode toggle delay in milliseconds.
+     * This is the time between toggling airplane mode on and off.
+     * @return Airplane mode toggle delay in milliseconds
+     */
+    public int getAirplaneModeDelay() {
+        return preferences.getInt(
+                Constants.PREF_AIRPLANE_MODE_DELAY,
+                Constants.DEFAULT_AIRPLANE_MODE_DELAY);
+    }
+
+    /**
+     * Set the airplane mode toggle delay in milliseconds.
+     * @param delayMs Airplane mode toggle delay in milliseconds
+     */
+    public void setAirplaneModeDelay(int delayMs) {
+        preferences.edit().putInt(Constants.PREF_AIRPLANE_MODE_DELAY, delayMs).apply();
+    }
+
+    /**
+     * Get the selected user agent type.
+     * @return Selected user agent type
+     */
+    public String getSelectedUserAgentType() {
+        return preferences.getString(
+                Constants.PREF_SELECTED_USER_AGENT_TYPE,
+                Constants.DEFAULT_USER_AGENT_TYPE);
+    }
+
+    /**
+     * Set the selected user agent type.
+     * @param userAgentType User agent type
+     */
+    public void setSelectedUserAgentType(String userAgentType) {
+        preferences.edit().putString(
+                Constants.PREF_SELECTED_USER_AGENT_TYPE, userAgentType).apply();
+    }
+
+    // Add this constant to Constants.java
+    public static final String PREF_USE_WEBVIEW_MODE = "use_webview_mode";
+
+// Add these methods to PreferencesManager.java
+    /**
+     * Check if WebView mode is enabled.
+     * @return True if WebView mode is enabled, false for HTTP mode
+     */
+    public boolean getUseWebViewMode() {
+        return preferences.getBoolean(Constants.PREF_USE_WEBVIEW_MODE, false);
+    }
+
+    /**
+     * Set whether WebView mode is enabled.
+     * @param enabled True to enable WebView mode, false for HTTP mode
+     */
+    public void setUseWebViewMode(boolean enabled) {
+        preferences.edit().putBoolean(Constants.PREF_USE_WEBVIEW_MODE, enabled).apply();
+    }
+
+    /**
+     * Get a boolean preference value
+     * @param key Preference key
+     * @param defaultValue Default value if preference doesn't exist
+     * @return Preference value or default
+     */
+    public boolean getBoolean(String key, boolean defaultValue) {
+        return preferences.getBoolean(key, defaultValue);
+    }
+
+    /**
+     * Set a boolean preference value
+     * @param key Preference key
+     * @param value Value to set
+     */
+    public void setBoolean(String key, boolean value) {
+        preferences.edit().putBoolean(key, value).apply();
+    }
+
+
+}
