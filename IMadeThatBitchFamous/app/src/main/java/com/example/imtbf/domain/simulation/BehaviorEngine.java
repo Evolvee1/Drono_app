@@ -164,7 +164,7 @@ public class BehaviorEngine {
             Logger.d(TAG, "Secondary action: Clicking a link");
 
             // Time to find and click
-            long findTimeMs = (long) (800 + random.nextGaussian() * 200);
+            long findTimeMs = Math.max(50, (long)(800 + random.nextGaussian() * 200));
             Thread.sleep(findTimeMs);
 
             // Simulated click
@@ -181,7 +181,7 @@ public class BehaviorEngine {
             Thread.sleep(500);
 
             // Dragging to select
-            long selectionTimeMs = (long) (400 + random.nextGaussian() * 100);
+            long selectionTimeMs = Math.max(50, (long)(400 + random.nextGaussian() * 100));
             Thread.sleep(selectionTimeMs);
 
         } else {
@@ -192,11 +192,11 @@ public class BehaviorEngine {
             int hoverCount = 2 + random.nextInt(4);
             for (int i = 0; i < hoverCount; i++) {
                 // Move time
-                long moveTimeMs = (long) (300 + random.nextGaussian() * 100);
+                long moveTimeMs = Math.max(50, (long)(300 + random.nextGaussian() * 100));
                 Thread.sleep(moveTimeMs);
 
                 // Hover time
-                long hoverTimeMs = (long) (200 + random.nextGaussian() * 150);
+                long hoverTimeMs = Math.max(50, (long)(200 + random.nextGaussian() * 150));
                 Thread.sleep(hoverTimeMs);
             }
         }
