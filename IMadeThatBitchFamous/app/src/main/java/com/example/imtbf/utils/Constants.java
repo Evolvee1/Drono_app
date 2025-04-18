@@ -17,7 +17,7 @@ public class Constants {
     public static final String PREF_DEBUG_LOGGING = "debug_logging";
     public static final String PREF_AIRPLANE_MODE_DELAY = "airplane_mode_delay";
     public static final String PREF_SELECTED_USER_AGENT_TYPE = "selected_user_agent_type";
-
+    public static final String PREF_NEW_WEBVIEW_PER_REQUEST = "new_webview_per_request";
     public static final String PREF_AGGRESSIVE_SESSION_CLEARING = "aggressive_session_clearing";
 
     public static final String PREF_USE_WEBVIEW_MODE = "use_webview_mode";

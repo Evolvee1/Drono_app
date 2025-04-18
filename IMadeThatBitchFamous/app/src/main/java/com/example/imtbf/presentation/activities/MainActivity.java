@@ -176,6 +176,12 @@ public class MainActivity extends AppCompatActivity {
         // Initialize WebView request manager
         webViewRequestManager = new WebViewRequestManager(this, networkStateMonitor);
 
+        if (webViewRequestManager != null) {
+            webViewRequestManager.setUseNewWebViewPerRequest(
+                    preferencesManager.isNewWebViewPerRequestEnabled()
+            );
+        }
+
         // Initialize WebView controller
         webViewController = new WebViewController(this);
 
@@ -202,6 +208,8 @@ public class MainActivity extends AppCompatActivity {
         );
         // Initialize session clearing manager
         sessionClearingManager = new SessionClearingManager(this);
+
+
 
         // Initialize session manager
         sessionManager = new SessionManager(
@@ -330,6 +338,8 @@ public class MainActivity extends AppCompatActivity {
         // Set up WebView controls
         setupWebViewControls();
 
+        setupNewWebViewPerRequestSwitch();
+
 
         // Set up configuration toggle
         ImageButton btnToggleConfig = findViewById(R.id.btnToggleConfig);
@@ -346,6 +356,33 @@ public class MainActivity extends AppCompatActivity {
         if (btnToggleConfig != null) {
             btnToggleConfig.setImageResource(isConfigExpanded ?
                     android.R.drawable.arrow_up_float : android.R.drawable.arrow_down_float);
+        }
+    }
+
+    /**
+     * Set up the "New WebView Per Request" switch
+     */
+    private void setupNewWebViewPerRequestSwitch() {
+        SwitchMaterial switchNewWebViewPerRequest = findViewById(R.id.switchNewWebViewPerRequest);
+        if (switchNewWebViewPerRequest != null) {
+            // Set initial state from preferences
+            switchNewWebViewPerRequest.setChecked(
+                    preferencesManager.isNewWebViewPerRequestEnabled()
+            );
+
+            // Set listener for switch
+            switchNewWebViewPerRequest.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // Save preference
+                preferencesManager.setNewWebViewPerRequestEnabled(isChecked);
+
+                // Update WebViewRequestManager if it exists
+                if (webViewRequestManager != null) {
+                    webViewRequestManager.setUseNewWebViewPerRequest(isChecked);
+                }
+
+                // Log the change
+                addLog("New WebView Per Request: " + (isChecked ? "Enabled" : "Disabled"));
+            });
         }
     }
 
@@ -490,6 +527,13 @@ public class MainActivity extends AppCompatActivity {
                     preferencesManager.isAggressiveSessionClearingEnabled()
             );
         }
+
+        SwitchMaterial switchNewWebViewPerRequest = findViewById(R.id.switchNewWebViewPerRequest);
+        if (switchNewWebViewPerRequest != null) {
+            switchNewWebViewPerRequest.setChecked(
+                    preferencesManager.isNewWebViewPerRequestEnabled()
+            );
+        }
     }
 
     /**
@@ -625,7 +669,8 @@ public class MainActivity extends AppCompatActivity {
                 "Rotate IP: " + rotateIp + ", " +
                 "Delays: " + delayMin + "-" + delayMax + "s, " +
                 "Airplane Mode Delay: " + airplaneModeDelay + "ms, " +
-                "Mode: " + (useWebViewMode ? "WebView" : "HTTP"));
+                "Mode: " + (useWebViewMode ? "WebView" : "HTTP") + ", " +
+                "New WebView Per Request: " + preferencesManager.isNewWebViewPerRequestEnabled());
         addLog("Target URL: " + targetUrl);
 
         // Set up airplane mode listener

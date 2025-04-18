@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.webkit.CookieManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -43,6 +44,9 @@ public class WebViewRequestManager {
     private final Handler mainHandler;
     private final Random random = new Random();
 
+    // Add flag to control whether to create a new WebView for each request
+    private boolean useNewWebViewPerRequest = false;
+
     /**
      * Constructor that initializes the WebView request manager.
      * @param context Application context
@@ -52,6 +56,28 @@ public class WebViewRequestManager {
         this.context = context;
         this.networkStateMonitor = networkStateMonitor;
         this.mainHandler = new Handler(Looper.getMainLooper());
+    }
+
+    /**
+     * Set whether to use a new WebView for each request.
+     * @param useNewWebViewPerRequest True to create a new WebView for each request, false to reuse
+     */
+    public void setUseNewWebViewPerRequest(boolean useNewWebViewPerRequest) {
+        this.useNewWebViewPerRequest = useNewWebViewPerRequest;
+        Logger.d(TAG, "New WebView per request mode: " + (useNewWebViewPerRequest ? "Enabled" : "Disabled"));
+
+        // If we're switching to reuse mode and we have an existing WebView, clean it up
+        if (!useNewWebViewPerRequest && webView != null) {
+            cleanupWebViewState();
+        }
+    }
+
+    /**
+     * Check if new WebView per request mode is enabled.
+     * @return True if enabled, false otherwise
+     */
+    public boolean isUseNewWebViewPerRequest() {
+        return useNewWebViewPerRequest;
     }
 
     /**
@@ -90,7 +116,8 @@ public class WebViewRequestManager {
         Logger.i(TAG, "Making WebView request to " + url + " with IP " + currentIp);
         Logger.d(TAG, "Using " + (deviceProfile.isInstagramApp() ? "Instagram app" : "browser") +
                 " profile on " + deviceProfile.getPlatform() +
-                " device type: " + deviceProfile.getDeviceType());
+                " device type: " + deviceProfile.getDeviceType() +
+                ", New WebView per request: " + useNewWebViewPerRequest);
 
         final long startTime = System.currentTimeMillis();
         final AtomicBoolean requestComplete = new AtomicBoolean(false);
@@ -99,16 +126,30 @@ public class WebViewRequestManager {
         // WebView must be created and used on the main thread
         mainHandler.post(() -> {
             try {
-                // Create WebView
-                webView = new WebView(context);
-                webView.setLayoutParams(new LinearLayout.LayoutParams(1, 1)); // 1x1 pixel size (invisible)
+                // Create or reuse WebView based on settings
+                if (useNewWebViewPerRequest || webView == null) {
+                    // Clean up existing WebView if there is one
+                    if (webView != null) {
+                        cleanupWebView();
+                        webView = null;
+                    }
+
+                    // Create a new WebView
+                    Logger.d(TAG, "Creating new WebView instance");
+                    webView = new WebView(context);
+                    webView.setLayoutParams(new LinearLayout.LayoutParams(1, 1)); // 1x1 pixel size (invisible)
+                } else {
+                    // Reuse existing WebView but clear state
+                    Logger.d(TAG, "Reusing existing WebView instance with state clearing");
+                    cleanupWebViewState();
+                }
 
                 // Configure WebView
                 WebSettings webSettings = webView.getSettings();
                 webSettings.setJavaScriptEnabled(true);
                 webSettings.setUserAgentString(deviceProfile.getUserAgent());
                 webSettings.setDomStorageEnabled(true);
-                webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+                webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
                 webSettings.setLoadsImagesAutomatically(true);
                 webSettings.setJavaScriptCanOpenWindowsAutomatically(false);
                 webSettings.setSupportMultipleWindows(false);
@@ -187,6 +228,29 @@ public class WebViewRequestManager {
         } catch (InterruptedException e) {
             Logger.w(TAG, "WebView request interrupted: " + e.getMessage());
             Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * Cleans up WebView state without destroying the WebView.
+     * This is used when reusing a WebView instance.
+     */
+    private void cleanupWebViewState() {
+        if (webView != null) {
+            mainHandler.post(() -> {
+                webView.stopLoading();
+                webView.loadUrl("about:blank");
+                webView.clearHistory();
+                webView.clearCache(true);
+                webView.clearFormData();
+
+                // Also clear cookies
+                CookieManager cookieManager = CookieManager.getInstance();
+                cookieManager.removeAllCookies(null);
+                cookieManager.flush();
+
+                Logger.d(TAG, "WebView state cleared for reuse");
+            });
         }
     }
 
@@ -368,8 +432,24 @@ public class WebViewRequestManager {
                 webView.clearHistory();
                 webView.clearCache(true);
                 webView.clearFormData();
-                webView.destroy();
-                webView = null;
+
+                // If using new WebView per request, fully destroy the WebView
+                if (useNewWebViewPerRequest) {
+                    // Remove from parent view if attached
+                    ViewParent parent = webView.getParent();
+                    if (parent instanceof ViewGroup) {
+                        ((ViewGroup) parent).removeView(webView);
+                    }
+
+                    webView.destroy();
+                    webView = null;
+                    Logger.d(TAG, "WebView instance destroyed completely");
+                } else {
+                    // Just clean the WebView but keep it for reuse
+                    webView.destroy();
+                    webView = null;
+                    Logger.d(TAG, "WebView instance cleaned for reuse");
+                }
             }
         });
     }

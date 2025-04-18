@@ -225,7 +225,17 @@
                             android:text="Aggressive Session Clearing"
                             android:layout_marginTop="8dp"
                             android:checked="true"/>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchNewWebViewPerRequest"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="New WebView Per Request"
+                            android:layout_marginTop="8dp" />
+
                     </LinearLayout>
+
+
 
                     <!-- Always visible: Start/Stop buttons -->
                     <LinearLayout
