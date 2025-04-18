@@ -284,5 +284,13 @@ public class PreferencesManager {
         preferences.edit().putBoolean(Constants.PREF_AGGRESSIVE_SESSION_CLEARING, enabled).apply();
     }
 
+    public boolean isNewWebViewPerRequestEnabled() {
+        return preferences.getBoolean(Constants.PREF_NEW_WEBVIEW_PER_REQUEST, false);
+    }
+
+    public void setNewWebViewPerRequestEnabled(boolean enabled) {
+        preferences.edit().putBoolean(Constants.PREF_NEW_WEBVIEW_PER_REQUEST, enabled).apply();
+    }
+
 
 }
