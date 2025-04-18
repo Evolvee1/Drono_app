@@ -15,6 +15,8 @@ public class PreferencesManager {
 
     private final SharedPreferences preferences;
 
+
+
     /**
      * Constructor that initializes SharedPreferences.
      * @param context Application context
@@ -271,6 +273,15 @@ public class PreferencesManager {
      */
     public void setBoolean(String key, boolean value) {
         preferences.edit().putBoolean(key, value).apply();
+    }
+
+    public boolean isAggressiveSessionClearingEnabled() {
+        // Default to true (turned on by default)
+        return preferences.getBoolean(Constants.PREF_AGGRESSIVE_SESSION_CLEARING, true);
+    }
+
+    public void setAggressiveSessionClearingEnabled(boolean enabled) {
+        preferences.edit().putBoolean(Constants.PREF_AGGRESSIVE_SESSION_CLEARING, enabled).apply();
     }
 
 

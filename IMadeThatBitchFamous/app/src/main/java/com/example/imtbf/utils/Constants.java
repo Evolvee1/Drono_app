@@ -18,6 +18,8 @@ public class Constants {
     public static final String PREF_AIRPLANE_MODE_DELAY = "airplane_mode_delay";
     public static final String PREF_SELECTED_USER_AGENT_TYPE = "selected_user_agent_type";
 
+    public static final String PREF_AGGRESSIVE_SESSION_CLEARING = "aggressive_session_clearing";
+
     public static final String PREF_USE_WEBVIEW_MODE = "use_webview_mode";
 
     // Default values

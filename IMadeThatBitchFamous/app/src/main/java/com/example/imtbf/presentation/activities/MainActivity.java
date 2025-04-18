@@ -27,6 +27,7 @@ import com.example.imtbf.data.network.WebViewRequestManager;
 import com.example.imtbf.databinding.ActivityMainBinding;
 import com.example.imtbf.domain.simulation.BehaviorEngine;
 import com.example.imtbf.domain.simulation.SessionManager;
+import com.example.imtbf.data.network.SessionClearingManager;
 import com.example.imtbf.domain.simulation.TimingDistributor;
 import com.example.imtbf.domain.system.AirplaneModeController;
 import com.example.imtbf.domain.webview.WebViewController;
@@ -57,6 +58,8 @@ public class MainActivity extends AppCompatActivity {
     private WebViewRequestManager webViewRequestManager;
     private HttpRequestManager httpRequestManager;
     private AirplaneModeController airplaneModeController;
+
+    private SessionClearingManager sessionClearingManager;
     private BehaviorEngine behaviorEngine;
     private TimingDistributor timingDistributor;
     private SessionManager sessionManager;
@@ -149,6 +152,9 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
+
+
     /**
      * Initialize all components needed for the app.
      */
@@ -186,6 +192,8 @@ public class MainActivity extends AppCompatActivity {
                 networkStateMonitor,
                 preferencesManager.getAirplaneModeDelay()
         );
+        // Initialize session clearing manager
+        sessionClearingManager = new SessionClearingManager(this);
 
         // Initialize session manager
         sessionManager = new SessionManager(
@@ -294,6 +302,23 @@ public class MainActivity extends AppCompatActivity {
             webViewController.configureWebView(webView, null); // Initial configuration
         }
 
+        SwitchMaterial switchAggressiveSessionClearing = findViewById(R.id.switchAggressiveSessionClearing);
+        if (switchAggressiveSessionClearing != null) {
+            // Set initial state from preferences
+            switchAggressiveSessionClearing.setChecked(
+                    preferencesManager.isAggressiveSessionClearingEnabled()
+            );
+
+            // Set listener for switch
+            switchAggressiveSessionClearing.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // Save preference
+                preferencesManager.setAggressiveSessionClearingEnabled(isChecked);
+
+                // Log the change
+                addLog("Aggressive Session Clearing: " + (isChecked ? "Enabled" : "Disabled"));
+            });
+        }
+
         // Set up WebView controls
         setupWebViewControls();
 
@@ -336,6 +361,8 @@ public class MainActivity extends AppCompatActivity {
         // Store preference
         preferencesManager.setBoolean("config_expanded", isConfigExpanded);
     }
+
+
 
     /**
      * Set up button click listeners.
@@ -412,6 +439,14 @@ public class MainActivity extends AppCompatActivity {
         }
         // Load configuration expansion state
         isConfigExpanded = preferencesManager.getBoolean("config_expanded", true);
+
+        SwitchMaterial switchAggressiveSessionClearing =
+                findViewById(R.id.switchAggressiveSessionClearing);
+        if (switchAggressiveSessionClearing != null) {
+            switchAggressiveSessionClearing.setChecked(
+                    preferencesManager.isAggressiveSessionClearingEnabled()
+            );
+        }
     }
 
     /**
@@ -572,6 +607,20 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         });
+
+        // Check if aggressive session clearing is enabled
+        boolean isAggressiveClearing =
+                preferencesManager.isAggressiveSessionClearingEnabled();
+
+        // Prepare WebView based on session clearing setting
+        WebView simulationWebView = isAggressiveClearing
+                ? sessionClearingManager.createCleanWebView()
+                : new WebView(this);
+
+        // Clear session data if aggressive clearing is on
+        if (isAggressiveClearing) {
+            sessionClearingManager.clearSessionData(simulationWebView);
+        }
 
         // Start session with custom delay settings
         sessionManager.startSession(
