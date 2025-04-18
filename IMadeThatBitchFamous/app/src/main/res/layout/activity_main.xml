@@ -124,6 +124,13 @@
                             android:orientation="horizontal"
                             android:layout_marginTop="8dp">
 
+                            <FrameLayout
+                                android:id="@+id/fragmentTrafficDistribution"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                app:layout_constraintTop_toBottomOf="@id/cardStatus"
+                                android:layout_marginTop="16dp" />
+
                             <com.google.android.material.textfield.TextInputLayout
                                 android:id="@+id/tilDelayMin"
                                 android:layout_width="0dp"

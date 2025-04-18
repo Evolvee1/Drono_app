@@ -292,5 +292,109 @@ public class PreferencesManager {
         preferences.edit().putBoolean(Constants.PREF_NEW_WEBVIEW_PER_REQUEST, enabled).apply();
     }
 
+    // Add these methods to PreferencesManager.java
+
+    /**
+     * Check if scheduled traffic distribution mode is enabled
+     * @return True if scheduled mode is enabled, false for immediate mode
+     */
+    public boolean isScheduledModeEnabled() {
+        return preferences.getBoolean(Constants.PREF_SCHEDULED_MODE_ENABLED,
+                Constants.DEFAULT_SCHEDULED_MODE_ENABLED);
+    }
+
+    /**
+     * Set whether scheduled traffic distribution mode is enabled
+     * @param enabled True to enable scheduled mode, false for immediate mode
+     */
+    public void setScheduledModeEnabled(boolean enabled) {
+        preferences.edit().putBoolean(Constants.PREF_SCHEDULED_MODE_ENABLED, enabled).apply();
+    }
+
+    /**
+     * Get the selected distribution pattern
+     * @return Distribution pattern name
+     */
+    public String getDistributionPattern() {
+        return preferences.getString(Constants.PREF_DISTRIBUTION_PATTERN,
+                Constants.DEFAULT_DISTRIBUTION_PATTERN);
+    }
+
+    /**
+     * Set the distribution pattern
+     * @param pattern Distribution pattern name
+     */
+    public void setDistributionPattern(String pattern) {
+        preferences.edit().putString(Constants.PREF_DISTRIBUTION_PATTERN, pattern).apply();
+    }
+
+    /**
+     * Get the distribution duration in hours
+     * @return Duration in hours
+     */
+    public int getDistributionDurationHours() {
+        return preferences.getInt(Constants.PREF_DISTRIBUTION_DURATION_HOURS,
+                Constants.DEFAULT_DISTRIBUTION_DURATION_HOURS);
+    }
+
+    /**
+     * Set the distribution duration in hours
+     * @param hours Duration in hours
+     */
+    public void setDistributionDurationHours(int hours) {
+        preferences.edit().putInt(Constants.PREF_DISTRIBUTION_DURATION_HOURS, hours).apply();
+    }
+
+    /**
+     * Get the peak hour start time (24-hour format)
+     * @return Start hour (0-23)
+     */
+    public int getPeakHourStart() {
+        return preferences.getInt(Constants.PREF_PEAK_HOUR_START,
+                Constants.DEFAULT_PEAK_HOUR_START);
+    }
+
+    /**
+     * Set the peak hour start time (24-hour format)
+     * @param hour Start hour (0-23)
+     */
+    public void setPeakHourStart(int hour) {
+        preferences.edit().putInt(Constants.PREF_PEAK_HOUR_START, hour).apply();
+    }
+
+    /**
+     * Get the peak hour end time (24-hour format)
+     * @return End hour (0-23)
+     */
+    public int getPeakHourEnd() {
+        return preferences.getInt(Constants.PREF_PEAK_HOUR_END,
+                Constants.DEFAULT_PEAK_HOUR_END);
+    }
+
+    /**
+     * Set the peak hour end time (24-hour format)
+     * @param hour End hour (0-23)
+     */
+    public void setPeakHourEnd(int hour) {
+        preferences.edit().putInt(Constants.PREF_PEAK_HOUR_END, hour).apply();
+    }
+
+    /**
+     * Get the peak traffic weight factor
+     * @return Weight factor (0.0-1.0)
+     */
+    public float getPeakTrafficWeight() {
+        return preferences.getFloat(Constants.PREF_PEAK_TRAFFIC_WEIGHT,
+                Constants.DEFAULT_PEAK_TRAFFIC_WEIGHT);
+    }
+
+    /**
+     * Set the peak traffic weight factor
+     * @param weight Weight factor (0.0-1.0)
+     */
+    public void setPeakTrafficWeight(float weight) {
+        preferences.edit().putFloat(Constants.PREF_PEAK_TRAFFIC_WEIGHT, weight).apply();
+    }
+
 
 }

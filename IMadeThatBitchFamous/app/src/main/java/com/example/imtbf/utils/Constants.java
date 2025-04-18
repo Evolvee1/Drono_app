@@ -94,6 +94,24 @@ public class Constants {
     public static final int DEFAULT_DELAY_MIN = 1; // 1 second
     public static final int DEFAULT_DELAY_MAX = 5; // 5 seconds
 
+    //schedule framework
+
+    // Traffic Distribution Preferences
+    public static final String PREF_SCHEDULED_MODE_ENABLED = "scheduled_mode_enabled";
+    public static final String PREF_DISTRIBUTION_PATTERN = "distribution_pattern";
+    public static final String PREF_DISTRIBUTION_DURATION_HOURS = "distribution_duration_hours";
+    public static final String PREF_PEAK_HOUR_START = "peak_hour_start";
+    public static final String PREF_PEAK_HOUR_END = "peak_hour_end";
+    public static final String PREF_PEAK_TRAFFIC_WEIGHT = "peak_traffic_weight";
+
+    // Default values
+    public static final boolean DEFAULT_SCHEDULED_MODE_ENABLED = false;
+    public static final String DEFAULT_DISTRIBUTION_PATTERN = "EVEN";
+    public static final int DEFAULT_DISTRIBUTION_DURATION_HOURS = 24;
+    public static final int DEFAULT_PEAK_HOUR_START = 9; // 9 AM
+    public static final int DEFAULT_PEAK_HOUR_END = 17;  // 5 PM
+    public static final float DEFAULT_PEAK_TRAFFIC_WEIGHT = 0.7f; // 70% during peak hours
+
     private Constants() {
         // Private constructor to prevent instantiation
     }

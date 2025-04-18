@@ -36,11 +36,14 @@ import com.example.imtbf.domain.system.AirplaneModeController;
 import com.example.imtbf.domain.webview.WebViewController;
 import com.example.imtbf.utils.Constants;
 import com.example.imtbf.utils.Logger;
+import com.example.imtbf.domain.simulation.DistributionPattern;
+import com.example.imtbf.domain.simulation.TrafficDistributionManager;
+import com.example.imtbf.presentation.fragments.TrafficDistributionFragment;
 
 /**
  * Main activity for the Instagram Traffic Simulator app.
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements TrafficDistributionFragment.TrafficDistributionListener {
 
     private static final String TAG = "MainActivity";
 
@@ -67,6 +70,9 @@ public class MainActivity extends AppCompatActivity {
     private TimingDistributor timingDistributor;
     private SessionManager sessionManager;
     private long simulationStartTime = 0;
+
+    private TrafficDistributionManager trafficDistributionManager;
+    private TrafficDistributionFragment trafficDistributionFragment;
 
     // Fields for time tracking
     private long startTimeMs = 0;
@@ -163,6 +169,55 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onScheduledModeChanged(boolean enabled) {
+        trafficDistributionManager.setScheduledModeEnabled(enabled);
+
+        // Update UI based on scheduled mode
+        if (enabled) {
+            // Configure traffic distribution
+            int iterations = Integer.parseInt(binding.etIterations.getText().toString());
+            int durationHours = preferencesManager.getDistributionDurationHours();
+            DistributionPattern pattern = DistributionPattern.fromString(
+                    preferencesManager.getDistributionPattern());
+
+            trafficDistributionManager.configureSchedule(iterations, durationHours, pattern);
+
+            // Set up session manager for scheduled requests
+            String targetUrl = binding.etTargetUrl.getText().toString().trim();
+
+            // Create initial device profile (or null for random)
+            DeviceProfile deviceProfile = binding.switchRandomDevices.isChecked() ?
+                    null : new DeviceProfile.Builder()
+                    .deviceType(DeviceProfile.TYPE_MOBILE)
+                    .platform(DeviceProfile.PLATFORM_ANDROID)
+                    .deviceTier(DeviceProfile.TIER_MID_RANGE)
+                    .userAgent(UserAgentData.getRandomUserAgent())
+                    .region("slovakia")
+                    .build();
+
+            sessionManager.configureScheduledRequests(targetUrl, deviceProfile);
+
+            addLog("Configured scheduled traffic distribution: " +
+                    iterations + " requests over " + durationHours + " hours");
+        } else {
+            addLog("Switched to immediate traffic distribution mode");
+        }
+    }
+
+    @Override
+    public void onDistributionSettingsChanged(DistributionPattern pattern, int durationHours,
+                                              int peakHourStart, int peakHourEnd, float peakWeight) {
+        if (trafficDistributionManager != null) {
+            // Update traffic distribution settings
+            int iterations = Integer.parseInt(binding.etIterations.getText().toString());
+            trafficDistributionManager.configureSchedule(iterations, durationHours, pattern);
+
+            addLog("Updated distribution settings: " + pattern.getDisplayName() +
+                    ", " + durationHours + " hours");
+        }
+    }
+
 
 
 
@@ -213,7 +268,6 @@ public class MainActivity extends AppCompatActivity {
         sessionClearingManager = new SessionClearingManager(this);
 
 
-
         // Initialize session manager
         sessionManager = new SessionManager(
                 this,
@@ -224,6 +278,8 @@ public class MainActivity extends AppCompatActivity {
                 behaviorEngine,
                 timingDistributor
         );
+
+        trafficDistributionManager = new TrafficDistributionManager(this, sessionManager);
     }
 
     /**
@@ -402,6 +458,19 @@ public class MainActivity extends AppCompatActivity {
         if (btnToggleConfig != null) {
             btnToggleConfig.setImageResource(isConfigExpanded ?
                     android.R.drawable.arrow_up_float : android.R.drawable.arrow_down_float);
+        }
+
+        // Set up traffic distribution fragment
+        if (findViewById(R.id.fragmentTrafficDistribution) != null) {
+            trafficDistributionFragment = (TrafficDistributionFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.fragmentTrafficDistribution);
+
+            if (trafficDistributionFragment == null) {
+                trafficDistributionFragment = new TrafficDistributionFragment();
+                getSupportFragmentManager().beginTransaction()
+                        .add(R.id.fragmentTrafficDistribution, trafficDistributionFragment)
+                        .commit();
+            }
         }
     }
 
@@ -693,9 +762,20 @@ public class MainActivity extends AppCompatActivity {
         timingDistributor.setMinIntervalSeconds(minInterval);
         timingDistributor.setMaxIntervalSeconds(maxInterval);
 
+
+
+        if (trafficDistributionManager != null &&
+                trafficDistributionManager.isScheduledModeEnabled()) {
+            // Start in scheduled mode
+            trafficDistributionManager.startDistribution();
+        }
+
+
+
         // Update UI
         binding.btnStart.setEnabled(false);
         binding.btnStop.setEnabled(true);
+        binding.tvStatusLabel.setText("Status: Running (Scheduled Mode)");
         binding.tvStatusLabel.setText("Status: Running");
         binding.tvProgress.setText("Progress: 0/" + iterations);
 
@@ -718,6 +798,7 @@ public class MainActivity extends AppCompatActivity {
                 "Mode: " + (useWebViewMode ? "WebView" : "HTTP") + ", " +
                 "New WebView Per Request: " + preferencesManager.isNewWebViewPerRequestEnabled());
         addLog("Target URL: " + targetUrl);
+        addLog("Pattern: " + preferencesManager.getDistributionPattern() + preferencesManager.getDistributionDurationHours());
 
         // Set up airplane mode listener
         airplaneModeController.setOperationListener(this::showAirplaneModeOperation);
@@ -741,6 +822,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         });
+
 
         // Check if aggressive session clearing is enabled
         boolean isAggressiveClearing =
@@ -787,9 +869,51 @@ public class MainActivity extends AppCompatActivity {
                     return null;
                 });
 
+        // Set up distribution listener
+        trafficDistributionManager.addListener(new TrafficDistributionManager.DistributionListener() {
+            @Override
+            public void onDistributionStatusChanged(boolean running, int progress) {
+                runOnUiThread(() -> {
+                    if (!running && progress >= 100) {
+                        // Completed
+                        binding.btnStart.setEnabled(true);
+                        binding.btnStop.setEnabled(false);
+                        binding.tvStatusLabel.setText("Status: Completed");
+                        addLog("Scheduled simulation completed");
+                    } else if (!running) {
+                        // Stopped
+                        binding.btnStart.setEnabled(true);
+                        binding.btnStop.setEnabled(false);
+                        binding.tvStatusLabel.setText("Status: Stopped");
+                        addLog("Scheduled simulation stopped");
+                    }
+                });
+            }
+
+            @Override
+            public void onRequestScheduled(long scheduledTimeMs, int index, int totalRequests) {
+                runOnUiThread(() -> {
+                    binding.tvProgress.setText("Progress: " + index + "/" + totalRequests);
+
+                    // Update fragment if available
+                    if (trafficDistributionFragment != null) {
+                        trafficDistributionFragment.updateDistributionStatus(
+                                true,
+                                (index * 100) / totalRequests,
+                                index,
+                                totalRequests,
+                                trafficDistributionManager.getEstimatedRemainingTimeMs(),
+                                trafficDistributionManager.getEstimatedCompletionTimeMs());
+                    }
+                });
+            }
+        });
+
         // Save settings
         preferencesManager.setSimulationRunning(true);
         saveSettings();
+
+        return;
     }
 
     /**
@@ -810,6 +934,13 @@ public class MainActivity extends AppCompatActivity {
 
         // Reset controller state to ensure clean state for next run
         airplaneModeController.resetState();
+
+        // Stop the scheduled distribution if it's running
+        if (trafficDistributionManager != null &&
+                trafficDistributionManager.isScheduledModeEnabled() &&
+                trafficDistributionManager.isRunning()) {
+            trafficDistributionManager.stopDistribution();
+        }
     }
 
     /**
@@ -897,6 +1028,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+
 
 
 

@@ -10,6 +10,9 @@ import com.example.imtbf.data.network.WebViewRequestManager;
 import com.example.imtbf.data.network.NetworkStateMonitor;
 import com.example.imtbf.domain.system.AirplaneModeController;
 import com.example.imtbf.utils.Logger;
+import com.example.imtbf.InstagramTrafficSimulatorApp;
+
+import android.content.Context;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -36,9 +39,12 @@ public class SessionManager {
     private SimulationSession currentSession;
     private boolean isRunning = false;
     private ProgressListener progressListener;
-
-    // Add at the top of the SessionManager class with other fields
     private long lastRequestTime = 0;
+
+    // For scheduled requests
+    private boolean scheduledRequestInProgress = false;
+    private String scheduledTargetUrl = null;
+    private DeviceProfile scheduledDeviceProfile = null;
 
     /**
      * Constructor that initializes the session manager with required dependencies.
@@ -376,5 +382,102 @@ public class SessionManager {
      */
     public SimulationSession getCurrentSession() {
         return currentSession;
+    }
+
+    /**
+     * Execute a single scheduled request.
+     * This is called by the TrafficDistributionManager when using scheduled distribution.
+     * @return True if request was initiated successfully
+     */
+    /**
+     * Execute a single scheduled request.
+     * This is called by the TrafficDistributionManager when using scheduled distribution.
+     * @return True if request was initiated successfully
+     */
+    public boolean executeScheduledRequest() {
+        if (scheduledRequestInProgress || !isRunning()) {
+            Logger.w(TAG, "Cannot execute scheduled request: " +
+                    (scheduledRequestInProgress ? "Another request in progress" : "Session not running"));
+            return false;
+        }
+
+        scheduledRequestInProgress = true;
+
+        try {
+            // Use the saved target URL and device profile
+            String targetUrl = scheduledTargetUrl != null ?
+                    scheduledTargetUrl : getCurrentSession().getTargetUrl();
+
+            DeviceProfile deviceProfile = scheduledDeviceProfile != null ?
+                    scheduledDeviceProfile : getCurrentSession().getDeviceProfile();
+
+            // Make a request using the same parameters as the session
+            boolean useRandomDeviceProfile = deviceProfile == null;
+
+            if (useRandomDeviceProfile) {
+                deviceProfile = UserAgentData.getSlovakDemographicProfile();
+            }
+
+            // Get current IP
+            String currentIp = networkStateMonitor.getCurrentIpAddress().getValue();
+
+            // Make the actual request
+            boolean useWebView = webViewRequestManager != null &&
+                    (context instanceof Context &&
+                            ((InstagramTrafficSimulatorApp)((Context)context).getApplicationContext())
+                                    .getPreferencesManager().getUseWebViewMode());
+
+            if (useWebView && webViewRequestManager != null) {
+                webViewRequestManager.makeRequest(targetUrl, deviceProfile, currentSession,
+                        new WebViewRequestManager.RequestCallback() {
+                            @Override
+                            public void onSuccess(int statusCode, long responseTimeMs) {
+                                Logger.i(TAG, "Scheduled WebView request successful: " +
+                                        statusCode + " in " + responseTimeMs + "ms");
+                                scheduledRequestInProgress = false;
+                            }
+
+                            @Override
+                            public void onError(String error) {
+                                Logger.e(TAG, "Scheduled WebView request failed: " + error);
+                                scheduledRequestInProgress = false;
+                            }
+                        });
+            } else {
+                // Fallback to HTTP request
+                httpRequestManager.makeRequest(targetUrl, deviceProfile, currentSession,
+                        new HttpRequestManager.RequestCallback() {
+                            @Override
+                            public void onSuccess(int statusCode, long responseTimeMs) {
+                                Logger.i(TAG, "Scheduled HTTP request successful: " +
+                                        statusCode + " in " + responseTimeMs + "ms");
+                                scheduledRequestInProgress = false;
+                            }
+
+                            @Override
+                            public void onError(String error) {
+                                Logger.e(TAG, "Scheduled HTTP request failed: " + error);
+                                scheduledRequestInProgress = false;
+                            }
+                        });
+            }
+
+            return true;
+        } catch (Exception e) {
+            Logger.e(TAG, "Error executing scheduled request: " + e.getMessage());
+            scheduledRequestInProgress = false;
+            return false;
+        }
+    }
+
+    /**
+     * Configure parameters for scheduled requests.
+     * @param targetUrl Target URL for scheduled requests
+     * @param deviceProfile Device profile for scheduled requests
+     */
+    public void configureScheduledRequests(String targetUrl, DeviceProfile deviceProfile) {
+        this.scheduledTargetUrl = targetUrl;
+        this.scheduledDeviceProfile = deviceProfile;
+        Logger.d(TAG, "Configured scheduled requests: URL=" + targetUrl);
     }
 }

@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.webkit.CookieManager;
@@ -68,7 +67,6 @@ public class WebViewRequestManager {
         // Log initialization for debugging
         String logMessage = "WebViewRequestManager initialized";
         Logger.i(TAG, logMessage);
-        Log.i(TAG, logMessage);
     }
 
     /**
@@ -82,19 +80,16 @@ public class WebViewRequestManager {
 
         this.useNewWebViewPerRequest = useNewWebViewPerRequest;
 
-        // Log to both app logs and logcat for better visibility
+        // Log to app logs
         Logger.i(TAG, logMessage);
-        Log.i(TAG, logMessage);
 
         // If we're switching to reuse mode and we have an existing WebView, clean it up
         if (!useNewWebViewPerRequest && webView != null) {
             Logger.i(TAG, "Cleaning up existing WebView for reuse mode");
-            Log.i(TAG, "Cleaning up existing WebView for reuse mode");
             cleanupWebViewState();
         } else if (useNewWebViewPerRequest && webView != null) {
             // If switching to new WebView mode, destroy any existing WebView
             Logger.i(TAG, "Destroying existing WebView for per-request mode");
-            Log.i(TAG, "Destroying existing WebView for per-request mode");
             destroyWebViewCompletely();
         }
     }
@@ -107,14 +102,12 @@ public class WebViewRequestManager {
             mainHandler.post(() -> {
                 try {
                     Logger.i(TAG, "Starting complete destruction of WebView ID: " + currentWebViewId);
-                    Log.i(TAG, "Starting complete destruction of WebView ID: " + currentWebViewId);
 
                     // Remove from parent if attached
                     ViewParent parent = webView.getParent();
                     if (parent instanceof ViewGroup) {
                         ((ViewGroup) parent).removeView(webView);
                         Logger.d(TAG, "WebView removed from parent view");
-                        Log.d(TAG, "WebView removed from parent view");
                     }
 
                     // Stop any loading and clear all state
@@ -137,7 +130,6 @@ public class WebViewRequestManager {
                         WebViewDatabase.getInstance(context).clearFormData();
                     } catch (Exception e) {
                         Logger.e(TAG, "Error clearing WebView database: " + e.getMessage());
-                        Log.e(TAG, "Error clearing WebView database: " + e.getMessage());
                     }
 
                     // Load blank page before destroying
@@ -151,12 +143,10 @@ public class WebViewRequestManager {
                     System.gc();
 
                     Logger.i(TAG, "WebView ID: " + currentWebViewId + " completely destroyed");
-                    Log.i(TAG, "WebView ID: " + currentWebViewId + " completely destroyed");
                     currentWebViewId = "";
 
                 } catch (Exception e) {
                     Logger.e(TAG, "Error destroying WebView: " + e.getMessage());
-                    Log.e(TAG, "Error destroying WebView: " + e.getMessage());
                 }
             });
         }
@@ -186,7 +176,6 @@ public class WebViewRequestManager {
         if (!networkStateMonitor.isNetworkAvailable()) {
             String errorMessage = "Network not available";
             Logger.e(TAG, errorMessage);
-            Log.e(TAG, errorMessage);
             if (callback != null) {
                 callback.onError(errorMessage);
             }
@@ -197,7 +186,6 @@ public class WebViewRequestManager {
         if (url == null || url.isEmpty() || !(url.startsWith("http://") || url.startsWith("https://"))) {
             String errorMessage = "Invalid URL: " + url;
             Logger.e(TAG, errorMessage);
-            Log.e(TAG, errorMessage);
             if (callback != null) {
                 callback.onError(errorMessage);
             }
@@ -206,12 +194,7 @@ public class WebViewRequestManager {
 
         String currentIp = networkStateMonitor.getCurrentIpAddress().getValue();
         Logger.i(TAG, "Making WebView request to " + url + " with IP " + currentIp);
-        Log.i(TAG, "Making WebView request to " + url + " with IP " + currentIp);
         Logger.i(TAG, "Using " + (deviceProfile.isInstagramApp() ? "Instagram app" : "browser") +
-                " profile on " + deviceProfile.getPlatform() +
-                " device type: " + deviceProfile.getDeviceType() +
-                ", New WebView per request: " + useNewWebViewPerRequest);
-        Log.i(TAG, "Using " + (deviceProfile.isInstagramApp() ? "Instagram app" : "browser") +
                 " profile on " + deviceProfile.getPlatform() +
                 " device type: " + deviceProfile.getDeviceType() +
                 ", New WebView per request: " + useNewWebViewPerRequest);
@@ -228,7 +211,6 @@ public class WebViewRequestManager {
                     // Clean up existing WebView if there is one
                     if (webView != null) {
                         Logger.i(TAG, "Destroying existing WebView before creating a new one");
-                        Log.i(TAG, "Destroying existing WebView before creating a new one");
                         destroyWebViewCompletely();
                         webView = null;
                     }
@@ -237,7 +219,6 @@ public class WebViewRequestManager {
                     webViewCreationCounter++;
                     currentWebViewId = "WebView-" + UUID.randomUUID().toString().substring(0, 8);
                     Logger.i(TAG, "Creating new WebView #" + webViewCreationCounter + ", ID: " + currentWebViewId);
-                    Log.i(TAG, "Creating new WebView #" + webViewCreationCounter + ", ID: " + currentWebViewId);
 
                     webView = new WebView(context);
                     webView.setLayoutParams(new LinearLayout.LayoutParams(1, 1)); // 1x1 pixel size (invisible)
@@ -245,7 +226,6 @@ public class WebViewRequestManager {
                 } else {
                     // Reuse existing WebView but clear state
                     Logger.i(TAG, "Reusing existing WebView ID: " + currentWebViewId + " with state clearing");
-                    Log.i(TAG, "Reusing existing WebView ID: " + currentWebViewId + " with state clearing");
                     cleanupWebViewState();
                 }
 
@@ -268,7 +248,6 @@ public class WebViewRequestManager {
                     webSettings.setUserAgentString(uniqueUserAgent);
 
                     Logger.i(TAG, "Set unique User-Agent: [" + uniqueUserAgent + "]");
-                    Log.i(TAG, "Set unique User-Agent: [" + uniqueUserAgent + "]");
                 }
 
                 // Set up cookie handling
@@ -281,7 +260,6 @@ public class WebViewRequestManager {
                     cookieManager.removeAllCookies(null);
                     cookieManager.flush();
                     Logger.d(TAG, "Cookies cleared for new WebView instance");
-                    Log.d(TAG, "Cookies cleared for new WebView instance");
                 }
 
                 // Set up WebView client to handle page loads
@@ -302,11 +280,9 @@ public class WebViewRequestManager {
                     headerDebug.append(header.getKey()).append(": ").append(header.getValue()).append("\n");
                 }
                 Logger.d(TAG, headerDebug.toString());
-                Log.d(TAG, headerDebug.toString());
 
                 // Load the URL with headers
                 Logger.i(TAG, "Loading URL in WebView ID: " + currentWebViewId);
-                Log.i(TAG, "Loading URL in WebView ID: " + currentWebViewId);
                 webView.loadUrl(url, headers);
 
                 // Set a timeout for the request
@@ -314,7 +290,6 @@ public class WebViewRequestManager {
                     if (!requestComplete.getAndSet(true)) {
                         String timeoutMsg = "WebView request timed out after " + PAGE_LOAD_TIMEOUT_MS + "ms";
                         Logger.w(TAG, timeoutMsg);
-                        Log.w(TAG, timeoutMsg);
 
                         if (session != null) {
                             session.addRequestResult(
@@ -329,7 +304,6 @@ public class WebViewRequestManager {
                         // Clean up and release latch
                         if (useNewWebViewPerRequest) {
                             Logger.i(TAG, "Destroying WebView ID: " + currentWebViewId + " after timeout");
-                            Log.i(TAG, "Destroying WebView ID: " + currentWebViewId + " after timeout");
                             destroyWebViewCompletely();
                         } else {
                             cleanupWebView();
@@ -341,7 +315,6 @@ public class WebViewRequestManager {
             } catch (Exception e) {
                 String exceptionMsg = "Error creating WebView: " + e.getMessage();
                 Logger.e(TAG, exceptionMsg, e);
-                Log.e(TAG, exceptionMsg, e);
 
                 if (!requestComplete.getAndSet(true)) {
                     if (session != null) {
@@ -364,7 +337,6 @@ public class WebViewRequestManager {
             requestLatch.await(PAGE_LOAD_TIMEOUT_MS + 5000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Logger.w(TAG, "WebView request interrupted: " + e.getMessage());
-            Log.w(TAG, "WebView request interrupted: " + e.getMessage());
             Thread.currentThread().interrupt();
         }
     }
@@ -385,7 +357,6 @@ public class WebViewRequestManager {
             String uniqueId = UUID.randomUUID().toString().substring(0, 8);
             userAgent = userAgent + " UniqueVisitor/" + uniqueId;
             Logger.d(TAG, "Added unique visitor ID to User-Agent: " + uniqueId);
-            Log.d(TAG, "Added unique visitor ID to User-Agent: " + uniqueId);
         }
         headers.put("User-Agent", userAgent);
 
@@ -417,7 +388,6 @@ public class WebViewRequestManager {
             mainHandler.post(() -> {
                 try {
                     Logger.i(TAG, "Clearing WebView state for ID: " + currentWebViewId);
-                    Log.i(TAG, "Clearing WebView state for ID: " + currentWebViewId);
 
                     webView.stopLoading();
                     webView.loadUrl("about:blank");
@@ -444,14 +414,11 @@ public class WebViewRequestManager {
                     } catch (Exception e) {
                         // Just log and continue
                         Logger.w(TAG, "Error clearing WebView database: " + e.getMessage());
-                        Log.w(TAG, "Error clearing WebView database: " + e.getMessage());
                     }
 
                     Logger.i(TAG, "WebView state cleared successfully for ID: " + currentWebViewId);
-                    Log.i(TAG, "WebView state cleared successfully for ID: " + currentWebViewId);
                 } catch (Exception e) {
                     Logger.e(TAG, "Error during WebView state cleanup: " + e.getMessage());
-                    Log.e(TAG, "Error during WebView state cleanup: " + e.getMessage());
                 }
             });
         }
@@ -498,12 +465,10 @@ public class WebViewRequestManager {
 
             if (!url.equals(initialUrl)) {
                 redirectCount++;
-                Logger.i(TAG, "WebView ID: " + webViewId + " - Redirect #" + redirectCount + ": " + initialUrl + " -> " + url);
-                Log.i(TAG, "WebView ID: " + webViewId + " - Redirect #" + redirectCount + ": " + initialUrl + " -> " + url);
+                Logger.i(TAG, "-----------********** WebView ID: " + webViewId + " - Redirect #" + redirectCount + ": " + initialUrl + " -> " + url + "**********-------------");
             }
 
             Logger.i(TAG, "WebView ID: " + webViewId + " - Page load started: " + url);
-            Log.i(TAG, "WebView ID: " + webViewId + " - Page load started: " + url);
         }
 
         @Override
@@ -511,16 +476,13 @@ public class WebViewRequestManager {
             super.onPageFinished(view, url);
             long loadTime = System.currentTimeMillis() - startTime;
             Logger.i(TAG, "WebView ID: " + webViewId + " - Page load finished: " + url + " in " + loadTime + "ms");
-            Log.i(TAG, "WebView ID: " + webViewId + " - Page load finished: " + url + " in " + loadTime + "ms");
             Logger.i(TAG, "WebView ID: " + webViewId + " - Total redirects: " + redirectCount);
-            Log.i(TAG, "WebView ID: " + webViewId + " - Total redirects: " + redirectCount);
 
             // Give a short delay to ensure JavaScript has run
             mainHandler.postDelayed(() -> {
                 if (!requestComplete.getAndSet(true)) {
                     // Now simulate behavior before completing
                     Logger.i(TAG, "WebView ID: " + webViewId + " - Starting user behavior simulation");
-                    Log.i(TAG, "WebView ID: " + webViewId + " - Starting user behavior simulation");
 
                     simulateUserBehavior(webView, () -> {
                         if (session != null) {
@@ -535,7 +497,6 @@ public class WebViewRequestManager {
 
                         // Now clean up and release latch
                         Logger.i(TAG, "WebView ID: " + webViewId + " - Request completed successfully, cleaning up");
-                        Log.i(TAG, "WebView ID: " + webViewId + " - Request completed successfully, cleaning up");
 
                         if (useNewWebViewPerRequest) {
                             destroyWebViewCompletely();
@@ -552,7 +513,6 @@ public class WebViewRequestManager {
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
             String errorMsg = "WebView ID: " + webViewId + " - Error: " + description;
             Logger.e(TAG, errorMsg);
-            Log.e(TAG, errorMsg);
 
             handleError(errorMsg);
         }
@@ -562,7 +522,6 @@ public class WebViewRequestManager {
             if (request.isForMainFrame()) {
                 String errorMsg = "WebView ID: " + webViewId + " - Error: " + error.getDescription();
                 Logger.e(TAG, errorMsg);
-                Log.e(TAG, errorMsg);
 
                 handleError(errorMsg);
             }
@@ -582,7 +541,6 @@ public class WebViewRequestManager {
 
                 // Clean up and release latch
                 Logger.i(TAG, "WebView ID: " + webViewId + " - Request failed, cleaning up");
-                Log.i(TAG, "WebView ID: " + webViewId + " - Request failed, cleaning up");
 
                 if (useNewWebViewPerRequest) {
                     destroyWebViewCompletely();
@@ -600,8 +558,7 @@ public class WebViewRequestManager {
     private void simulateUserBehavior(WebView webView, Runnable onComplete) {
         // Randomly determine how long to stay on page (5-10 seconds)
         int stayTimeMs = 5000 + random.nextInt(5000);
-        Logger.i(TAG, "WebView ID: " + currentWebViewId + " - Simulating user behavior for " + stayTimeMs + "ms");
-        Log.i(TAG, "WebView ID: " + currentWebViewId + " - Simulating user behavior for " + stayTimeMs + "ms");
+        Logger.i(TAG, "-----------********** WebView ID: " + currentWebViewId + " - Simulating user behavior for " + stayTimeMs + "ms");
 
         // Schedule some scroll events
         scheduleScrollEvents(webView, stayTimeMs);
@@ -616,7 +573,6 @@ public class WebViewRequestManager {
     private void scheduleScrollEvents(WebView webView, int totalTimeMs) {
         int scrollCount = 2 + random.nextInt(4); // 2-5 scrolls
         Logger.d(TAG, "WebView ID: " + currentWebViewId + " - Scheduling " + scrollCount + " scroll events");
-        Log.d(TAG, "WebView ID: " + currentWebViewId + " - Scheduling " + scrollCount + " scroll events");
 
         for (int i = 1; i <= scrollCount; i++) {
             int delay = (totalTimeMs * i) / (scrollCount + 1); // Distribute throughout the time
@@ -629,10 +585,8 @@ public class WebViewRequestManager {
                     String js = "window.scrollBy(0, " + finalScrollAmount + ");";
                     webView.evaluateJavascript(js, null);
                     Logger.d(TAG, "WebView ID: " + currentWebViewId + " - Scroll event #" + eventNumber + ": " + finalScrollAmount + "px");
-                    Log.d(TAG, "WebView ID: " + currentWebViewId + " - Scroll event #" + eventNumber + ": " + finalScrollAmount + "px");
                 } catch (Exception e) {
                     Logger.e(TAG, "Error in scroll event: " + e.getMessage());
-                    Log.e(TAG, "Error in scroll event: " + e.getMessage());
                 }
             }, delay);
         }
@@ -646,7 +600,6 @@ public class WebViewRequestManager {
             if (webView != null) {
                 try {
                     Logger.i(TAG, "Cleaning up WebView ID: " + currentWebViewId);
-                    Log.i(TAG, "Cleaning up WebView ID: " + currentWebViewId);
 
                     webView.stopLoading();
                     webView.loadUrl("about:blank");
@@ -661,26 +614,22 @@ public class WebViewRequestManager {
                         if (parent instanceof ViewGroup) {
                             ((ViewGroup) parent).removeView(webView);
                             Logger.d(TAG, "WebView removed from parent view");
-                            Log.d(TAG, "WebView removed from parent view");
                         }
 
                         webView.destroy();
                         webView = null;
                         System.gc(); // Hint to garbage collector
 
-                        Logger.i(TAG, "WebView ID: " + currentWebViewId + " completely destroyed");
-                        Log.i(TAG, "WebView ID: " + currentWebViewId + " completely destroyed");
+                        Logger.i(TAG, "-----------********** WebView ID: " + currentWebViewId + " completely destroyed **************-----------");
                         currentWebViewId = "";
                     } else {
                         // Just clean the WebView but keep it for reuse
                         webView.destroy();
                         webView = null;
                         Logger.i(TAG, "WebView instance cleaned for reuse");
-                        Log.i(TAG, "WebView instance cleaned for reuse");
                     }
                 } catch (Exception e) {
                     Logger.e(TAG, "Error during WebView cleanup: " + e.getMessage());
-                    Log.e(TAG, "Error during WebView cleanup: " + e.getMessage());
                 }
             }
         });
