@@ -7,12 +7,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
+import android.webkit.WebSettings;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import android.widget.Toast;
 import android.widget.ImageButton;
 import androidx.core.widget.NestedScrollView;
+import android.content.Context;
+import java.util.UUID; // Also add this for UUID
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -101,6 +104,11 @@ public class MainActivity extends AppCompatActivity {
         if (airplaneModeController != null) {
             airplaneModeController.resetState();
         }
+
+        if (webView != null) {
+            webViewController.configureWebViewForIncognito(webView);
+        }
+
     }
 
     @Override
@@ -360,6 +368,41 @@ public class MainActivity extends AppCompatActivity {
 
         // Store preference
         preferencesManager.setBoolean("config_expanded", isConfigExpanded);
+    }
+
+
+
+    private WebView prepareIncognitoWebView(Context context, DeviceProfile deviceProfile) {
+        try {
+            // Create a fresh WebView for each request
+            WebView freshWebView = new WebView(context);
+
+            // Configure WebView with incognito settings and device profile
+            webViewController.configureWebView(freshWebView, deviceProfile);
+
+            // Additional optional configurations for incognito mode
+            WebSettings settings = freshWebView.getSettings();
+
+            // Ensure no tracking
+            settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
+            // Clear any potential existing data
+            freshWebView.clearCache(true);
+            freshWebView.clearHistory();
+            freshWebView.clearFormData();
+
+            // Add a unique identifier for the session
+            freshWebView.setTag(UUID.randomUUID().toString());
+
+            // Optional: Log the preparation
+            Logger.d(TAG, "Prepared incognito WebView with unique ID: " + freshWebView.getTag());
+
+            return freshWebView;
+        } catch (Exception e) {
+            // Fallback to standard WebView if something goes wrong
+            Logger.e(TAG, "Error preparing incognito WebView", e);
+            return new WebView(context);
+        }
     }
 
 
