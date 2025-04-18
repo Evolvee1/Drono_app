@@ -111,8 +111,11 @@ public class NetworkStateMonitor {
             isRegistered = true;
             Logger.d(TAG, "NetworkStateMonitor registered");
 
-            // Initial check
-            fetchCurrentIpAddress();
+            // Initial check with higher priority
+            if (isNetworkAvailable()) {
+                // Do immediate fetch on main thread to ensure quick initial loading
+                fetchCurrentIpAddress();
+            }
         }
     }
 
@@ -187,12 +190,24 @@ public class NetworkStateMonitor {
             try {
                 if (!isNetworkAvailable()) {
                     currentIpAddress.postValue("");
+                    Logger.d(TAG, "Cannot fetch IP address: Network unavailable");
                     return;
                 }
+
+                Logger.d(TAG, "Starting IP address fetch...");
 
                 // First try ipify API
                 String ip = fetchFromIpify();
                 if (ip != null && !ip.isEmpty()) {
+                    Logger.i(TAG, "Successfully fetched IP address from ipify: " + ip);
+                    currentIpAddress.postValue(ip);
+                    return;
+                }
+
+                // Try alternative service if first one fails
+                ip = fetchFromAlternativeService();
+                if (ip != null && !ip.isEmpty()) {
+                    Logger.i(TAG, "Successfully fetched IP address from alternative service: " + ip);
                     currentIpAddress.postValue(ip);
                     return;
                 }
@@ -200,16 +215,17 @@ public class NetworkStateMonitor {
                 // Fallback to InetAddress
                 ip = fetchFromInetAddress();
                 if (ip != null && !ip.isEmpty()) {
+                    Logger.i(TAG, "Successfully fetched IP address from InetAddress: " + ip);
                     currentIpAddress.postValue(ip);
                     return;
                 }
 
                 // If all methods fail
-                Logger.w(TAG, "Failed to determine IP address");
+                Logger.w(TAG, "Failed to determine IP address using all methods");
                 currentIpAddress.postValue("Unknown");
 
             } catch (Exception e) {
-                Logger.e(TAG, "Error fetching IP address", e);
+                Logger.e(TAG, "Error fetching IP address: " + e.getMessage());
                 currentIpAddress.postValue("Error");
             }
         });
@@ -299,4 +315,34 @@ public class NetworkStateMonitor {
 
         return connected;
     }
+
+    /**
+     * Try to fetch IP from an alternative service as backup
+     */
+    private String fetchFromAlternativeService() {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL("https://api.ipify.org/");
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(3000); // Faster timeout for alternative
+            connection.setReadTimeout(3000);
+
+            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                // Read the response
+                java.util.Scanner scanner = new java.util.Scanner(connection.getInputStream());
+                scanner.useDelimiter("\\A");
+                String ip = scanner.hasNext() ? scanner.next() : "";
+                scanner.close();
+                return ip.trim();
+            }
+        } catch (IOException e) {
+            Logger.d(TAG, "Error fetching from alternative service: " + e.getMessage());
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        return null;
+    }
+
 }

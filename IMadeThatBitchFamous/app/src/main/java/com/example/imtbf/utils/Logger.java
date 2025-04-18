@@ -14,10 +14,18 @@ import java.util.Locale;
  */
 public class Logger {
 
-    private static boolean debugLoggingEnabled = false;
+    private static boolean debugLoggingEnabled = true;
     private static final int MAX_LOG_ENTRIES = 1000;
     private static final List<LogEntry> logEntries = new ArrayList<>();
     private static final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault());
+
+    /**
+     * Check if debug logging is enabled
+     * @return True if debug logging is enabled
+     */
+    public static boolean isDebugLoggingEnabled() {
+        return debugLoggingEnabled;
+    }
 
     /**
      * Initialize the logger with debug settings.

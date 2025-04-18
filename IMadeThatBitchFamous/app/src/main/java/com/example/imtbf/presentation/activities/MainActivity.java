@@ -88,6 +88,9 @@ public class MainActivity extends AppCompatActivity {
         // Initialize components
         initializeComponents();
 
+        // Load initial IP address
+        loadInitialIpAddress();
+
         // Set up UI
         setupUI();
 
@@ -248,6 +251,49 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+    /**
+     * Load the current IP address when the app starts
+     */
+    private void loadInitialIpAddress() {
+        // Show loading state in the UI
+        binding.tvCurrentIp.setText("Current IP: Loading...");
+
+        // Add a log entry
+        addLog("Fetching initial IP address...");
+
+        // Set a timeout for the IP fetch operation
+        final Handler handler = new Handler();
+        final Runnable timeoutRunnable = () -> {
+            if (binding.tvCurrentIp.getText().toString().contains("Loading")) {
+                binding.tvCurrentIp.setText("Current IP: Fetch timed out. Try again.");
+                addLog("IP address fetch timed out");
+            }
+        };
+
+        // Set 5-second timeout
+        handler.postDelayed(timeoutRunnable, 5000);
+
+        // Observe the IP address LiveData
+        networkStateMonitor.getCurrentIpAddress().observe(this, ipAddress -> {
+            // Remove the timeout handler since we got a response
+            handler.removeCallbacks(timeoutRunnable);
+
+            if (ipAddress != null && !ipAddress.isEmpty()) {
+                binding.tvCurrentIp.setText("Current IP: " + ipAddress);
+                addLog("Initial IP Address: " + ipAddress);
+            } else {
+                // If the IP is empty but we got a response, update UI
+                if (!binding.tvCurrentIp.getText().toString().contains("timed out")) {
+                    binding.tvCurrentIp.setText("Current IP: Could not determine");
+                    addLog("Could not determine IP address");
+                }
+            }
+        });
+
+        // Force a refresh of the IP address
+        networkStateMonitor.fetchCurrentIpAddress();
+    }
+
 
 
 
