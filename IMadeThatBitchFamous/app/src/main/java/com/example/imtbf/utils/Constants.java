@@ -66,11 +66,11 @@ public class Constants {
     public static final String PREF_READING_TIME_STDDEV = "reading_time_stddev";
 
     // Default values for reading time
-    public static final int DEFAULT_READING_TIME_MEAN_MS = 10000; // 15 seconds
-    public static final int DEFAULT_READING_TIME_STDDEV_MS = 8000; // 7.5 seconds
+    public static final int DEFAULT_READING_TIME_MEAN_MS = 2000; // 15 seconds
+    public static final int DEFAULT_READING_TIME_STDDEV_MS = 1000; // 7.5 seconds
 
-    public static final int READING_TIME_MEAN_MS = 10000; // 15 seconds average reading time
-    public static final int READING_TIME_STDDEV_MS = 8000; // Standard deviation for reading time
+    public static final int READING_TIME_MEAN_MS = 2000; // 15 seconds average reading time
+    public static final int READING_TIME_STDDEV_MS = 1000; // Standard deviation for reading time
     public static final float SCROLL_PROBABILITY = 1.0f; // 84% of visitors scroll
     public static final int AVERAGE_SCROLL_DEPTH_PERCENT = 56; // Average scroll depth
 
