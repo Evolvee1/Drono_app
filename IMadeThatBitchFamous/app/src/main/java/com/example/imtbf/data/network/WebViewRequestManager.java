@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.webkit.CookieManager;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -47,8 +48,6 @@ public class WebViewRequestManager {
     private final Handler mainHandler;
     private final Random random = new Random();
 
-<<<<<<< Updated upstream
-=======
     // Add flag to control whether to create a new WebView for each request
     private boolean useNewWebViewPerRequest = false;
     // Counter for tracking WebView creations
@@ -56,7 +55,6 @@ public class WebViewRequestManager {
     // Store the current instance ID for debugging
     private String currentWebViewId = "";
 
->>>>>>> Stashed changes
     /**
      * Constructor that initializes the WebView request manager.
      * @param context Application context
@@ -74,8 +72,6 @@ public class WebViewRequestManager {
     }
 
     /**
-<<<<<<< Updated upstream
-=======
      * Set whether to use a new WebView for each request.
      * @param useNewWebViewPerRequest True to create a new WebView for each request, false to reuse
      */
@@ -175,7 +171,6 @@ public class WebViewRequestManager {
     }
 
     /**
->>>>>>> Stashed changes
      * Make a request to the specified URL with Instagram referrer.
      * @param url Target URL
      * @param deviceProfile Device profile for user agent
@@ -218,7 +213,8 @@ public class WebViewRequestManager {
                 ", New WebView per request: " + useNewWebViewPerRequest);
         Log.i(TAG, "Using " + (deviceProfile.isInstagramApp() ? "Instagram app" : "browser") +
                 " profile on " + deviceProfile.getPlatform() +
-                " device type: " + deviceProfile.getDeviceType());
+                " device type: " + deviceProfile.getDeviceType() +
+                ", New WebView per request: " + useNewWebViewPerRequest);
 
         final long startTime = System.currentTimeMillis();
         final AtomicBoolean requestComplete = new AtomicBoolean(false);
@@ -227,11 +223,6 @@ public class WebViewRequestManager {
         // WebView must be created and used on the main thread
         mainHandler.post(() -> {
             try {
-<<<<<<< Updated upstream
-                // Create WebView
-                webView = new WebView(context);
-                webView.setLayoutParams(new LinearLayout.LayoutParams(1, 1)); // 1x1 pixel size (invisible)
-=======
                 // Create or reuse WebView based on settings
                 if (useNewWebViewPerRequest || webView == null) {
                     // Clean up existing WebView if there is one
@@ -257,14 +248,13 @@ public class WebViewRequestManager {
                     Log.i(TAG, "Reusing existing WebView ID: " + currentWebViewId + " with state clearing");
                     cleanupWebViewState();
                 }
->>>>>>> Stashed changes
 
                 // Configure WebView with specialized settings for uniqueness
                 WebSettings webSettings = webView.getSettings();
                 webSettings.setJavaScriptEnabled(true);
                 webSettings.setUserAgentString(deviceProfile.getUserAgent());
                 webSettings.setDomStorageEnabled(true);
-                webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+                webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
                 webSettings.setLoadsImagesAutomatically(true);
                 webSettings.setJavaScriptCanOpenWindowsAutomatically(false);
                 webSettings.setSupportMultipleWindows(false);
@@ -380,8 +370,6 @@ public class WebViewRequestManager {
     }
 
     /**
-<<<<<<< Updated upstream
-=======
      * Get realistic browser headers for WebView request, with option to add unique visitor info
      */
     private Map<String, String> getRealisticHeaders(DeviceProfile deviceProfile, boolean addUniqueVisitor) {
@@ -470,7 +458,6 @@ public class WebViewRequestManager {
     }
 
     /**
->>>>>>> Stashed changes
      * A robust WebViewClient that handles redirects and page loading events.
      */
     private class RobustWebViewClient extends WebViewClient {
@@ -657,15 +644,6 @@ public class WebViewRequestManager {
     private void cleanupWebView() {
         mainHandler.post(() -> {
             if (webView != null) {
-<<<<<<< Updated upstream
-                webView.stopLoading();
-                webView.loadUrl("about:blank");
-                webView.clearHistory();
-                webView.clearCache(true);
-                webView.clearFormData();
-                webView.destroy();
-                webView = null;
-=======
                 try {
                     Logger.i(TAG, "Cleaning up WebView ID: " + currentWebViewId);
                     Log.i(TAG, "Cleaning up WebView ID: " + currentWebViewId);
@@ -704,7 +682,6 @@ public class WebViewRequestManager {
                     Logger.e(TAG, "Error during WebView cleanup: " + e.getMessage());
                     Log.e(TAG, "Error during WebView cleanup: " + e.getMessage());
                 }
->>>>>>> Stashed changes
             }
         });
     }
