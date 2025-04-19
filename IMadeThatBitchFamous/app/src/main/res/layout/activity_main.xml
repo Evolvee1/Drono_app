@@ -124,13 +124,6 @@
                             android:orientation="horizontal"
                             android:layout_marginTop="8dp">
 
-                            <FrameLayout
-                                android:id="@+id/fragmentTrafficDistribution"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                app:layout_constraintTop_toBottomOf="@id/cardStatus"
-                                android:layout_marginTop="16dp" />
-
                             <com.google.android.material.textfield.TextInputLayout
                                 android:id="@+id/tilDelayMin"
                                 android:layout_width="0dp"
@@ -193,6 +186,30 @@
                                 android:layout_height="wrap_content"
                                 android:inputType="number" />
                         </com.google.android.material.textfield.TextInputLayout>
+
+                        <FrameLayout
+                            android:id="@+id/fragmentTrafficDistribution"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:layout_constraintTop_toBottomOf="@id/cardStatus"
+                            android:layout_marginTop="16dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:layout_marginTop="8dp">
+                            >
+
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/switchHandleRedirects"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Handle Marketing Redirects"
+                                android:layout_marginTop="8dp"
+                                android:checked="true"/>
+                        </LinearLayout>
+
 
                         <LinearLayout
                             android:layout_width="match_parent"

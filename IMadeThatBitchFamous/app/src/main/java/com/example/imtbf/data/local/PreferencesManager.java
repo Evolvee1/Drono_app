@@ -396,5 +396,22 @@ public class PreferencesManager {
         preferences.edit().putFloat(Constants.PREF_PEAK_TRAFFIC_WEIGHT, weight).apply();
     }
 
+    /**
+     * Check if marketing redirect handling is enabled.
+     * @return True if enabled, false otherwise
+     */
+    public boolean isHandleMarketingRedirectsEnabled() {
+        return preferences.getBoolean(Constants.PREF_HANDLE_MARKETING_REDIRECTS,
+                Constants.DEFAULT_HANDLE_MARKETING_REDIRECTS);
+    }
+
+    /**
+     * Set whether marketing redirect handling is enabled.
+     * @param enabled True to enable handling, false to disable
+     */
+    public void setHandleMarketingRedirectsEnabled(boolean enabled) {
+        preferences.edit().putBoolean(Constants.PREF_HANDLE_MARKETING_REDIRECTS, enabled).apply();
+    }
+
 
 }

@@ -111,6 +111,8 @@ public class Constants {
     public static final int DEFAULT_PEAK_HOUR_START = 9; // 9 AM
     public static final int DEFAULT_PEAK_HOUR_END = 17;  // 5 PM
     public static final float DEFAULT_PEAK_TRAFFIC_WEIGHT = 0.7f; // 70% during peak hours
+    public static final String PREF_HANDLE_MARKETING_REDIRECTS = "handle_marketing_redirects";
+    public static final boolean DEFAULT_HANDLE_MARKETING_REDIRECTS = true;
 
     private Constants() {
         // Private constructor to prevent instantiation

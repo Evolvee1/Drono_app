@@ -280,6 +280,13 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         );
 
         trafficDistributionManager = new TrafficDistributionManager(this, sessionManager);
+
+        // Initialize Metapic redirect handling
+        if (webViewRequestManager != null) {
+            webViewRequestManager.setHandleMetapicRedirects(
+                    preferencesManager.isHandleMarketingRedirectsEnabled()
+            );
+        }
     }
 
     /**
@@ -472,6 +479,28 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
                         .commit();
             }
         }
+
+        SwitchMaterial switchHandleRedirects = findViewById(R.id.switchHandleRedirects);
+        if (switchHandleRedirects != null) {
+            // Set initial state from preferences
+            switchHandleRedirects.setChecked(
+                    preferencesManager.isHandleMarketingRedirectsEnabled()
+            );
+
+            // Set listener for switch
+            switchHandleRedirects.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // Save preference
+                preferencesManager.setHandleMarketingRedirectsEnabled(isChecked);
+
+                // Update WebViewRequestManager if it exists
+                if (webViewRequestManager != null) {
+                    webViewRequestManager.setHandleMetapicRedirects(isChecked);
+                }
+
+                // Log the change
+                addLog("Marketing Redirect Handling: " + (isChecked ? "Enabled" : "Disabled"));
+            });
+        }
     }
 
     /**
@@ -647,6 +676,13 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         if (switchNewWebViewPerRequest != null) {
             switchNewWebViewPerRequest.setChecked(
                     preferencesManager.isNewWebViewPerRequestEnabled()
+            );
+        }
+
+        SwitchMaterial switchHandleRedirects = findViewById(R.id.switchHandleRedirects);
+        if (switchHandleRedirects != null) {
+            switchHandleRedirects.setChecked(
+                    preferencesManager.isHandleMarketingRedirectsEnabled()
             );
         }
     }

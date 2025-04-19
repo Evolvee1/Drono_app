@@ -15,6 +15,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebViewDatabase;
 import android.widget.LinearLayout;
+import android.net.Uri;
 
 import androidx.annotation.NonNull;
 
@@ -53,6 +54,8 @@ public class WebViewRequestManager {
     private int webViewCreationCounter = 0;
     // Store the current instance ID for debugging
     private String currentWebViewId = "";
+
+    private boolean handleMetapicRedirects = true;
 
     /**
      * Constructor that initializes the WebView request manager.
@@ -439,6 +442,10 @@ public class WebViewRequestManager {
         private final WebView webView;
         private final String webViewId;
 
+        private int sameUrlCount = 0;
+        private String lastRedirectUrl = "";
+        private static final int MAX_SAME_URL_REDIRECTS = 2;
+
         public RobustWebViewClient(
                 String url,
                 String currentIp,
@@ -509,10 +516,21 @@ public class WebViewRequestManager {
             }, 500);
         }
 
+
         @Override
         public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
             String errorMsg = "WebView ID: " + webViewId + " - Error: " + description;
             Logger.e(TAG, errorMsg);
+
+            // Try to handle the URL if it's a special scheme
+            if (description.contains("ERR_UNKNOWN_URL_SCHEME") && handleMetapicRedirects) {
+                String processedUrl = processSpecialUrlSchemes(failingUrl);
+                if (processedUrl != null && !processedUrl.equals(failingUrl)) {
+                    Logger.i(TAG, "Recovered from URL scheme error by converting: " + failingUrl + " -> " + processedUrl);
+                    view.loadUrl(processedUrl);
+                    return;
+                }
+            }
 
             handleError(errorMsg);
         }
@@ -522,6 +540,17 @@ public class WebViewRequestManager {
             if (request.isForMainFrame()) {
                 String errorMsg = "WebView ID: " + webViewId + " - Error: " + error.getDescription();
                 Logger.e(TAG, errorMsg);
+
+                // Try to handle the URL if it's a special scheme
+                if (error.getDescription().toString().contains("ERR_UNKNOWN_URL_SCHEME") && handleMetapicRedirects) {
+                    String failingUrl = request.getUrl().toString();
+                    String processedUrl = processSpecialUrlSchemes(failingUrl);
+                    if (processedUrl != null && !processedUrl.equals(failingUrl)) {
+                        Logger.i(TAG, "Recovered from URL scheme error by converting: " + failingUrl + " -> " + processedUrl);
+                        view.loadUrl(processedUrl);
+                        return;
+                    }
+                }
 
                 handleError(errorMsg);
             }
@@ -549,6 +578,62 @@ public class WebViewRequestManager {
                 }
                 requestLatch.countDown();
             }
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            Logger.d(TAG, "WebView ID: " + webViewId + " - shouldOverrideUrlLoading: " + url);
+
+            // Check for redirect loops - if we're seeing the same URL multiple times
+            if (url.equals(lastRedirectUrl)) {
+                sameUrlCount++;
+                if (sameUrlCount >= MAX_SAME_URL_REDIRECTS) {
+                    Logger.w(TAG, "WebView ID: " + webViewId + " - Detected redirect loop with URL: " + url);
+
+                    // Force extraction of final URL
+                    try {
+                        Uri uri = Uri.parse(url);
+                        String targetParam = uri.getQueryParameter("u");
+                        if (targetParam != null && !targetParam.isEmpty()) {
+                            String finalUrl = Uri.decode(targetParam);
+                            Logger.i(TAG, "Force-redirecting to extracted target: " + finalUrl);
+                            view.loadUrl(finalUrl);
+                            lastRedirectUrl = url;
+                            return true;
+                        }
+                    } catch (Exception e) {
+                        Logger.e(TAG, "Error during force-bypass: " + e.getMessage());
+                    }
+                }
+            } else {
+                lastRedirectUrl = url;
+                sameUrlCount = 0;
+            }
+
+            // Process special URLs like intent:// schemes
+            String processedUrl = processSpecialUrlSchemes(url);
+
+            if (processedUrl == null) {
+                // Returning true means we handled the URL (by ignoring it)
+                Logger.i(TAG, "Skipping URL: " + url);
+                return true;
+            }
+
+            if (!processedUrl.equals(url)) {
+                // URL was converted, load the new URL
+                Logger.i(TAG, "Converted URL: " + url + " -> " + processedUrl);
+                view.loadUrl(processedUrl);
+                return true;
+            }
+
+            // For normal web URLs, let WebView handle it
+            return false;
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            String url = request.getUrl().toString();
+            return shouldOverrideUrlLoading(view, url);
         }
     }
 
@@ -633,6 +718,168 @@ public class WebViewRequestManager {
                 }
             }
         });
+    }
+
+    /**
+     * Set whether to handle Metapic and similar marketing redirect URLs.
+     * @param enable True to handle redirects, false to use default WebView behavior
+     */
+    public void setHandleMetapicRedirects(boolean enable) {
+        this.handleMetapicRedirects = enable;
+        Logger.i(TAG, "Metapic redirect handling: " + (enable ? "Enabled" : "Disabled"));
+    }
+
+    /**
+     * Check if Metapic redirect handling is enabled.
+     * @return True if enabled, false otherwise
+     */
+    public boolean isHandleMetapicRedirectsEnabled() {
+        return handleMetapicRedirects;
+    }
+
+    /**
+     * Process intent or other special URL schemes.
+     * Handles redirect URLs that would normally cause errors in WebView.
+     * @param url The URL to process
+     * @return A web-loadable URL or null if it can't be processed
+     */
+    private String processSpecialUrlSchemes(String url) {
+        if (url == null || url.isEmpty()) {
+            return null;
+        }
+
+        if (!handleMetapicRedirects) {
+            // If redirect handling is disabled, return the URL as-is
+            return url;
+        }
+
+        try {
+            // Handle Instagram linkshim redirects
+            if (url.contains("l.instagram.com") ||
+                    (url.contains("instagram.com") && url.contains("/linkshim"))) {
+
+                Logger.i(TAG, "Processing Instagram redirect URL: " + url);
+
+                try {
+                    Uri uri = Uri.parse(url);
+                    String uParam = uri.getQueryParameter("u");
+
+                    if (uParam != null && !uParam.isEmpty()) {
+                        // The 'u' parameter contains the encoded target URL
+                        String targetUrl = Uri.decode(uParam);
+                        Logger.i(TAG, "Extracted Instagram redirect target: " + targetUrl);
+                        return targetUrl;
+                    }
+                } catch (Exception e) {
+                    Logger.e(TAG, "Error parsing Instagram redirect URL: " + e.getMessage());
+                }
+            }
+
+            // Handle intent:// URLs (commonly used by marketing trackers like Metapic)
+            if (url.startsWith("intent://")) {
+                Logger.i(TAG, "Processing intent URL: " + url);
+
+                // Extract the target URL from the intent
+                // Format: intent://host/path?params#Intent;scheme=https;...;end
+                String target = null;
+
+                // Find the scheme specification
+                int schemeStart = url.indexOf("scheme=");
+                if (schemeStart > 0) {
+                    schemeStart += 7; // Length of "scheme="
+                    int schemeEnd = url.indexOf(";", schemeStart);
+                    if (schemeEnd > 0) {
+                        String scheme = url.substring(schemeStart, schemeEnd);
+
+                        // Extract the host and path
+                        String hostAndPath = url.substring(8, url.indexOf("#"));
+
+                        // Combine into a proper URL
+                        target = scheme + "://" + hostAndPath;
+
+                        Logger.i(TAG, "Converted intent URL to: " + target);
+                        return target;
+                    }
+                }
+
+                // Fallback: If we can't parse the intent URL correctly, try to extract URL parameters
+                // Many marketing URLs include the actual target as a parameter
+                if (target == null && url.contains("url=")) {
+                    int urlParamIndex = url.indexOf("url=");
+                    int urlEnd = url.indexOf("&", urlParamIndex);
+                    if (urlEnd < 0) {
+                        urlEnd = url.indexOf(";", urlParamIndex);
+                    }
+                    if (urlEnd < 0) {
+                        urlEnd = url.indexOf("#", urlParamIndex);
+                    }
+
+                    if (urlEnd > 0) {
+                        target = url.substring(urlParamIndex + 4, urlEnd);
+                        // URL might be encoded
+                        target = Uri.decode(target);
+
+                        Logger.i(TAG, "Extracted target URL from parameter: " + target);
+                        return target;
+                    }
+                }
+
+                // If all extraction attempts fail, just convert to https
+                if (target == null) {
+                    // Strip the intent:// prefix and everything after the #Intent part
+                    String domain = url.substring(9, url.indexOf("#"));
+                    target = "https://" + domain;
+                    Logger.i(TAG, "Using fallback conversion: " + target);
+                    return target;
+                }
+            }
+
+            // Handle metapic-specific redirects where they might be multiple nested redirects
+            if (url.contains("mtpc.se") || url.contains("metapic")) {
+                Logger.i(TAG, "Detected potential Metapic link: " + url);
+
+                try {
+                    Uri uri = Uri.parse(url);
+                    // Check for common redirect parameters
+                    String[] redirectParams = {"target", "url", "u", "goto", "dest", "redirect"};
+
+                    for (String param : redirectParams) {
+                        String targetUrl = uri.getQueryParameter(param);
+                        if (targetUrl != null && !targetUrl.isEmpty()) {
+                            targetUrl = Uri.decode(targetUrl);
+                            Logger.i(TAG, "Extracted Metapic redirect target from " + param + ": " + targetUrl);
+                            return targetUrl;
+                        }
+                    }
+                } catch (Exception e) {
+                    Logger.e(TAG, "Error parsing Metapic URL: " + e.getMessage());
+                }
+            }
+
+            // Handle other non-web schemes
+            if (url.startsWith("market://") ||
+                    url.startsWith("instagram://") ||
+                    url.startsWith("fb://")) {
+
+                Logger.i(TAG, "Found non-web URL scheme: " + url.substring(0, url.indexOf("://")+3));
+
+                // For market:// links, try to convert to web Play Store links
+                if (url.startsWith("market://")) {
+                    String packagePath = url.substring(9); // Remove "market://"
+                    return "https://play.google.com/store/apps/" + packagePath;
+                }
+
+                // For other app links, we'll skip by returning null
+                // This signals to the WebViewClient that we should ignore this navigation
+                Logger.i(TAG, "Skipping app-specific URL scheme");
+                return null;
+            }
+        } catch (Exception e) {
+            Logger.e(TAG, "Error processing special URL: " + e.getMessage());
+        }
+
+        // If we get here, the URL is either already a web URL or couldn't be processed
+        return url;
     }
 
     /**
