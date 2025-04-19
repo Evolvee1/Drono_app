@@ -95,7 +95,13 @@ public class NetworkStatsInterceptor implements Interceptor {
 
         // Request body if present
         if (request.body() != null) {
-            size += request.body().contentLength();
+            try {
+                size += request.body().contentLength();
+            } catch (IOException e) {
+                Logger.e(TAG, "Error getting content length: " + e.getMessage());
+                // Use a reasonable default value for the size estimate
+                size += 100; // Default to 100 bytes if we can't determine
+            }
         }
 
         return size;

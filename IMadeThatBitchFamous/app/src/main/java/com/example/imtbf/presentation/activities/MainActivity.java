@@ -15,7 +15,9 @@ import android.widget.Toast;
 import android.widget.ImageButton;
 import androidx.core.widget.NestedScrollView;
 import android.content.Context;
-import java.util.UUID; // Also add this for UUID
+import java.util.UUID;
+import android.widget.TextView;
+import android.widget.FrameLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -79,17 +81,7 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
     private TrafficDistributionManager trafficDistributionManager;
     private TrafficDistributionFragment trafficDistributionFragment;
 
-    // Fields for time tracking
-    private long startTimeMs = 0;
-    private Handler timeUpdateHandler = new Handler();
-    private Runnable timeUpdateRunnable = new Runnable() {
-        @Override
-        public void run() {
-            updateElapsedTime();
-            timeUpdateHandler.postDelayed(this, 1000); // Update every second
-        }
-    };
-
+    // Network statistics tracking
     private NetworkStatsTracker networkStatsTracker;
     private NetworkSpeedGaugeView networkSpeedView;
     private Handler networkUpdateHandler = new Handler();
@@ -98,6 +90,17 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         public void run() {
             updateNetworkStats();
             networkUpdateHandler.postDelayed(this, 1000); // Update every second
+        }
+    };
+
+    // Fields for time tracking
+    private long startTimeMs = 0;
+    private Handler timeUpdateHandler = new Handler();
+    private Runnable timeUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateElapsedTime();
+            timeUpdateHandler.postDelayed(this, 1000); // Update every second
         }
     };
 
@@ -133,7 +136,6 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         if (webView != null) {
             webViewController.configureWebViewForIncognito(webView);
         }
-
     }
 
     @Override
@@ -245,9 +247,6 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         }
     }
 
-
-
-
     /**
      * Initialize all components needed for the app.
      */
@@ -291,9 +290,9 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
                 networkStateMonitor,
                 preferencesManager.getAirplaneModeDelay()
         );
+
         // Initialize session clearing manager
         sessionClearingManager = new SessionClearingManager(this);
-
 
         // Initialize session manager
         sessionManager = new SessionManager(
@@ -315,22 +314,28 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
             );
         }
 
-        private void initializeNetworkMonitoring() {
-            // Create network stats tracker
-            networkStatsTracker = new NetworkStatsTracker(this);
+        // Initialize network statistics tracking
+        initializeNetworkMonitoring();
+    }
 
-            // Add network stats interceptor to OkHttpClient
-            if (httpRequestManager != null) {
-                NetworkStatsInterceptor interceptor = new NetworkStatsInterceptor(networkStatsTracker);
-                // Add the interceptor to your OkHttpClient
-                // Note: This requires modifying HttpRequestManager to accept interceptors
-                // or adding a method to add them later
-            }
+    /**
+     * Initialize network monitoring components
+     */
+    private void initializeNetworkMonitoring() {
+        // Create network stats tracker
+        networkStatsTracker = new NetworkStatsTracker(this);
 
-            // Observe network stats changes
-            networkStatsTracker.getCurrentStats().observe(this, this::onNetworkStatsChanged);
-            networkStatsTracker.getSessionData().observe(this, this::onSessionDataChanged);
+        // Add network stats interceptor to OkHttpClient
+        if (httpRequestManager != null) {
+            NetworkStatsInterceptor interceptor = new NetworkStatsInterceptor(networkStatsTracker);
+            // Add the interceptor to your OkHttpClient
+            // Note: This requires modifying HttpRequestManager to accept interceptors
+            // or adding a method to add them later
         }
+
+        // Observe network stats changes
+        networkStatsTracker.getCurrentStats().observe(this, this::onNetworkStatsChanged);
+        networkStatsTracker.getSessionData().observe(this, this::onSessionDataChanged);
     }
 
     /**
@@ -358,6 +363,7 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
             }
         });
     }
+
     /**
      * Load the current IP address when the app starts
      */
@@ -400,9 +406,6 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         // Force a refresh of the IP address
         networkStateMonitor.fetchCurrentIpAddress();
     }
-
-
-
 
     /**
      * Set up WebView controls
@@ -493,7 +496,6 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
 
         setupNewWebViewPerRequestSwitch();
 
-
         // Set up configuration toggle
         ImageButton btnToggleConfig = findViewById(R.id.btnToggleConfig);
         if (btnToggleConfig != null) {
@@ -546,47 +548,50 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
             });
         }
 
-        private void setupNetworkStatsUI() {
-            // Find network stats views
-            TextView tvDownloadSpeed = findViewById(R.id.tvDownloadSpeed);
-            TextView tvUploadSpeed = findViewById(R.id.tvUploadSpeed);
-            TextView tvDownloadTotal = findViewById(R.id.tvDownloadTotal);
-            TextView tvUploadTotal = findViewById(R.id.tvUploadTotal);
-            TextView tvTotalData = findViewById(R.id.tvTotalData);
-            TextView tvRequestCount = findViewById(R.id.tvRequestCount);
-            TextView tvSessionDuration = findViewById(R.id.tvSessionDuration);
-            TextView tvNetworkStatus = findViewById(R.id.tvNetworkStatus);
-            Button btnResetStats = findViewById(R.id.btnResetStats);
-
-            // Create network speed gauge
-            FrameLayout networkGraphContainer = findViewById(R.id.networkGraphContainer);
-            if (networkGraphContainer != null) {
-                networkGraphContainer.removeAllViews();
-
-                networkSpeedView = new NetworkSpeedGaugeView(this);
-                networkGraphContainer.addView(networkSpeedView, new FrameLayout.LayoutParams(
-                        FrameLayout.LayoutParams.MATCH_PARENT,
-                        FrameLayout.LayoutParams.MATCH_PARENT));
-            }
-
-            // Set up reset button
-            if (btnResetStats != null) {
-                btnResetStats.setOnClickListener(v -> {
-                    if (networkStatsTracker != null) {
-                        networkStatsTracker.stopTracking();
-                        networkStatsTracker.startTracking();
-                        if (networkSpeedView != null) {
-                            networkSpeedView.reset();
-                        }
-                        addLog("Network statistics reset");
-                    }
-                });
-            }
-        }
-
+        // Setup network statistics UI
+        setupNetworkStatsUI();
     }
 
+    /**
+     * Set up network statistics UI components
+     */
+    private void setupNetworkStatsUI() {
+        // Find network stats views
+        TextView tvDownloadSpeed = findViewById(R.id.tvDownloadSpeed);
+        TextView tvUploadSpeed = findViewById(R.id.tvUploadSpeed);
+        TextView tvDownloadTotal = findViewById(R.id.tvDownloadTotal);
+        TextView tvUploadTotal = findViewById(R.id.tvUploadTotal);
+        TextView tvTotalData = findViewById(R.id.tvTotalData);
+        TextView tvRequestCount = findViewById(R.id.tvRequestCount);
+        TextView tvSessionDuration = findViewById(R.id.tvSessionDuration);
+        TextView tvNetworkStatus = findViewById(R.id.tvNetworkStatus);
+        Button btnResetStats = findViewById(R.id.btnResetStats);
 
+        // Create network speed gauge
+        FrameLayout networkGraphContainer = findViewById(R.id.networkGraphContainer);
+        if (networkGraphContainer != null) {
+            networkGraphContainer.removeAllViews();
+
+            networkSpeedView = new NetworkSpeedGaugeView(this);
+            networkGraphContainer.addView(networkSpeedView, new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT));
+        }
+
+        // Set up reset button
+        if (btnResetStats != null) {
+            btnResetStats.setOnClickListener(v -> {
+                if (networkStatsTracker != null) {
+                    networkStatsTracker.stopTracking();
+                    networkStatsTracker.startTracking();
+                    if (networkSpeedView != null) {
+                        networkSpeedView.reset();
+                    }
+                    addLog("Network statistics reset");
+                }
+            });
+        }
+    }
 
     /**
      * Set up the "New WebView Per Request" switch
@@ -636,8 +641,9 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         preferencesManager.setBoolean("config_expanded", isConfigExpanded);
     }
 
-
-
+    /**
+     * Prepare a WebView configured for incognito browsing
+     */
     private WebView prepareIncognitoWebView(Context context, DeviceProfile deviceProfile) {
         try {
             // Create a fresh WebView for each request
@@ -670,8 +676,6 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
             return new WebView(context);
         }
     }
-
-
 
     /**
      * Set up button click listeners.
@@ -731,11 +735,6 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         binding.etDelayMax.setText(String.valueOf(
                 preferencesManager.getInt(PREF_DELAY_MAX, DEFAULT_DELAY_MAX)));
 
-        binding.etDelayMin.setText(String.valueOf(
-                preferencesManager.getInt(PREF_DELAY_MIN, DEFAULT_DELAY_MIN)));
-        binding.etDelayMax.setText(String.valueOf(
-                preferencesManager.getInt(PREF_DELAY_MAX, DEFAULT_DELAY_MAX)));
-
         // Add this line to load airplane mode delay
         binding.etAirplaneModeDelay.setText(String.valueOf(
                 preferencesManager.getAirplaneModeDelay()));
@@ -746,6 +745,7 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         if (switchUseWebView != null) {
             switchUseWebView.setChecked(useWebViewMode);
         }
+
         // Load configuration expansion state
         isConfigExpanded = preferencesManager.getBoolean("config_expanded", true);
 
@@ -883,20 +883,15 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         timingDistributor.setMinIntervalSeconds(minInterval);
         timingDistributor.setMaxIntervalSeconds(maxInterval);
 
-
-
         if (trafficDistributionManager != null &&
                 trafficDistributionManager.isScheduledModeEnabled()) {
             // Start in scheduled mode
             trafficDistributionManager.startDistribution();
         }
 
-
-
         // Update UI
         binding.btnStart.setEnabled(false);
         binding.btnStop.setEnabled(true);
-        binding.tvStatusLabel.setText("Status: Running (Scheduled Mode)");
         binding.tvStatusLabel.setText("Status: Running");
         binding.tvProgress.setText("Progress: 0/" + iterations);
 
@@ -919,7 +914,6 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
                 "Mode: " + (useWebViewMode ? "WebView" : "HTTP") + ", " +
                 "New WebView Per Request: " + preferencesManager.isNewWebViewPerRequestEnabled());
         addLog("Target URL: " + targetUrl);
-        addLog("Pattern: " + preferencesManager.getDistributionPattern() + preferencesManager.getDistributionDurationHours());
 
         // Set up airplane mode listener
         airplaneModeController.setOperationListener(this::showAirplaneModeOperation);
@@ -943,7 +937,6 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
                 }
             });
         });
-
 
         // Check if aggressive session clearing is enabled
         boolean isAggressiveClearing =
@@ -1033,8 +1026,6 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         // Save settings
         preferencesManager.setSimulationRunning(true);
         saveSettings();
-
-        return;
     }
 
     /**
@@ -1102,55 +1093,20 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
     }
 
     /**
-     * Add a log message to the log view.
-     * @param message Log message
+     * Update network statistics display
      */
-    private void addLog(String message) {
-        String timestamp = Logger.formatTime(System.currentTimeMillis());
-        String logMessage = timestamp + " | " + message + "\n";
+    private void updateNetworkStats() {
+        if (networkStatsTracker == null) return;
 
-        runOnUiThread(() -> {
-            binding.tvLogs.append(logMessage);
-
-            // Find the logs NestedScrollView by ID
-            NestedScrollView logsScrollView = findViewById(R.id.logsScrollView);
-            if (logsScrollView != null) {
-                // Post to ensure it happens after layout is complete
-                logsScrollView.post(() -> logsScrollView.fullScroll(View.FOCUS_DOWN));
-            }
-        });
+        NetworkSession session = networkStatsTracker.getCurrentSession();
+        if (session != null) {
+            onSessionDataChanged(session);
+        }
     }
 
     /**
-     * Format time in milliseconds to human-readable string.
-     * @param timeMs Time in milliseconds
-     * @return Formatted time string (HH:MM:SS)
+     * Handle changes to network statistics
      */
-    private String formatTime(long timeMs) {
-        long seconds = (timeMs / 1000) % 60;
-        long minutes = (timeMs / (1000 * 60)) % 60;
-        long hours = (timeMs / (1000 * 60 * 60));
-
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
-    }
-
-    /**
-     * Method to show airplane mode operation status.
-     */
-    private void showAirplaneModeOperation(boolean isOperating) {
-        runOnUiThread(() -> {
-            if (isOperating) {
-                binding.tvStatusLabel.setText("Status: Rotating IP...");
-                addLog("IP rotation in progress");
-                // Could add a progress indicator here if desired
-            } else {
-                binding.tvStatusLabel.setText("Status: Running");
-                addLog("IP rotation completed");
-            }
-        });
-    }
-
-
     private void onNetworkStatsChanged(NetworkStats stats) {
         if (stats == null) return;
 
@@ -1174,6 +1130,9 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         });
     }
 
+    /**
+     * Handle changes to network session data
+     */
     private void onSessionDataChanged(NetworkSession session) {
         if (session == null) return;
 
@@ -1216,19 +1175,54 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         });
     }
 
-    // Method to periodically update network stats
-    private void updateNetworkStats() {
-        if (networkStatsTracker == null) return;
-
-        NetworkSession session = networkStatsTracker.getCurrentSession();
-        if (session != null) {
-            onSessionDataChanged(session);
-        }
+    /**
+     * Method to show airplane mode operation status.
+     */
+    private void showAirplaneModeOperation(boolean isOperating) {
+        runOnUiThread(() -> {
+            if (isOperating) {
+                binding.tvStatusLabel.setText("Status: Rotating IP...");
+                addLog("IP rotation in progress");
+                // Could add a progress indicator here if desired
+            } else {
+                binding.tvStatusLabel.setText("Status: Running");
+                addLog("IP rotation completed");
+            }
+        });
     }
 
+    /**
+     * Add a log message to the log view.
+     * @param message Log message
+     */
+    private void addLog(String message) {
+        String timestamp = Logger.formatTime(System.currentTimeMillis());
+        String logMessage = timestamp + " | " + message + "\n";
 
+        runOnUiThread(() -> {
+            binding.tvLogs.append(logMessage);
 
+            // Find the logs NestedScrollView by ID
+            NestedScrollView logsScrollView = findViewById(R.id.logsScrollView);
+            if (logsScrollView != null) {
+                // Post to ensure it happens after layout is complete
+                logsScrollView.post(() -> logsScrollView.fullScroll(View.FOCUS_DOWN));
+            }
+        });
+    }
 
+    /**
+     * Format time in milliseconds to human-readable string.
+     * @param timeMs Time in milliseconds
+     * @return Formatted time string (HH:MM:SS)
+     */
+    private String formatTime(long timeMs) {
+        long seconds = (timeMs / 1000) % 60;
+        long minutes = (timeMs / (1000 * 60)) % 60;
+        long hours = (timeMs / (1000 * 60 * 60));
+
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds);
+    }
 
     /**
      * Clear all logs.

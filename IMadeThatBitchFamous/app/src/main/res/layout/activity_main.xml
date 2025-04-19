@@ -18,7 +18,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/cardStatus">
 
             <LinearLayout
                 android:id="@+id/configHeader"
@@ -298,7 +299,7 @@
             app:cardElevation="4dp"
             android:layout_marginTop="16dp"
             app:layout_constraintTop_toBottomOf="@id/configContainer"
-            app:layout_constraintBottom_toTopOf="@id/cardWebView"
+            app:layout_constraintBottom_toTopOf="@id/cardNetworkStats"
             app:layout_constraintVertical_chainStyle="packed">
 
             <LinearLayout
