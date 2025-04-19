@@ -8,6 +8,7 @@ import com.example.imtbf.data.models.DeviceProfile;
 import com.example.imtbf.data.models.SimulationSession;
 import com.example.imtbf.utils.Constants;
 import com.example.imtbf.utils.Logger;
+import com.example.imtbf.data.network.NetworkStatsInterceptor;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -21,6 +22,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+
+
 
 /**
  * Manages HTTP requests with Instagram referrer spoofing.
@@ -36,6 +39,8 @@ public class HttpRequestManager {
 
     private final OkHttpClient client;
     private final NetworkStateMonitor networkStateMonitor;
+
+    private NetworkStatsInterceptor networkStatsInterceptor;
 
     /**
      * Constructor that initializes the HTTP client.

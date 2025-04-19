@@ -370,6 +370,20 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardNetworkStats"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/cardStatus"
+            app:layout_constraintBottom_toTopOf="@id/cardWebView">
+
+            <include layout="@layout/network_stats_card" />
+
+        </com.google.android.material.card.MaterialCardView>
+
         <!-- Add WebView Container -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardWebView"
@@ -379,7 +393,7 @@
             app:cardCornerRadius="8dp"
             app:cardElevation="4dp"
             android:layout_marginTop="16dp"
-            app:layout_constraintTop_toBottomOf="@id/cardStatus"
+            app:layout_constraintTop_toBottomOf="@id/cardNetworkStats"
             app:layout_constraintBottom_toBottomOf="parent"
             android:visibility="gone">
 

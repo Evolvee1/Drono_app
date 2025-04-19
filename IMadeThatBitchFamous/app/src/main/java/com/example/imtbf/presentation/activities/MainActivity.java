@@ -39,6 +39,11 @@ import com.example.imtbf.utils.Logger;
 import com.example.imtbf.domain.simulation.DistributionPattern;
 import com.example.imtbf.domain.simulation.TrafficDistributionManager;
 import com.example.imtbf.presentation.fragments.TrafficDistributionFragment;
+import com.example.imtbf.data.network.NetworkStatsTracker;
+import com.example.imtbf.data.network.NetworkStatsInterceptor;
+import com.example.imtbf.data.models.NetworkStats;
+import com.example.imtbf.data.models.NetworkSession;
+import com.example.imtbf.presentation.views.NetworkSpeedGaugeView;
 
 /**
  * Main activity for the Instagram Traffic Simulator app.
@@ -85,6 +90,17 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         }
     };
 
+    private NetworkStatsTracker networkStatsTracker;
+    private NetworkSpeedGaugeView networkSpeedView;
+    private Handler networkUpdateHandler = new Handler();
+    private Runnable networkUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateNetworkStats();
+            networkUpdateHandler.postDelayed(this, 1000); // Update every second
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,6 +139,13 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
     @Override
     protected void onResume() {
         super.onResume();
+
+        // Start network monitoring
+        if (networkStatsTracker != null) {
+            networkStatsTracker.startTracking();
+            networkUpdateHandler.post(networkUpdateRunnable);
+        }
+
         // Register network state monitor
         networkStateMonitor.register();
 
@@ -136,6 +159,10 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
     @Override
     protected void onPause() {
         super.onPause();
+
+        // Pause network updates
+        networkUpdateHandler.removeCallbacks(networkUpdateRunnable);
+
         // Save settings
         saveSettings();
     }
@@ -286,6 +313,23 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
             webViewRequestManager.setHandleMetapicRedirects(
                     preferencesManager.isHandleMarketingRedirectsEnabled()
             );
+        }
+
+        private void initializeNetworkMonitoring() {
+            // Create network stats tracker
+            networkStatsTracker = new NetworkStatsTracker(this);
+
+            // Add network stats interceptor to OkHttpClient
+            if (httpRequestManager != null) {
+                NetworkStatsInterceptor interceptor = new NetworkStatsInterceptor(networkStatsTracker);
+                // Add the interceptor to your OkHttpClient
+                // Note: This requires modifying HttpRequestManager to accept interceptors
+                // or adding a method to add them later
+            }
+
+            // Observe network stats changes
+            networkStatsTracker.getCurrentStats().observe(this, this::onNetworkStatsChanged);
+            networkStatsTracker.getSessionData().observe(this, this::onSessionDataChanged);
         }
     }
 
@@ -501,7 +545,48 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
                 addLog("Marketing Redirect Handling: " + (isChecked ? "Enabled" : "Disabled"));
             });
         }
+
+        private void setupNetworkStatsUI() {
+            // Find network stats views
+            TextView tvDownloadSpeed = findViewById(R.id.tvDownloadSpeed);
+            TextView tvUploadSpeed = findViewById(R.id.tvUploadSpeed);
+            TextView tvDownloadTotal = findViewById(R.id.tvDownloadTotal);
+            TextView tvUploadTotal = findViewById(R.id.tvUploadTotal);
+            TextView tvTotalData = findViewById(R.id.tvTotalData);
+            TextView tvRequestCount = findViewById(R.id.tvRequestCount);
+            TextView tvSessionDuration = findViewById(R.id.tvSessionDuration);
+            TextView tvNetworkStatus = findViewById(R.id.tvNetworkStatus);
+            Button btnResetStats = findViewById(R.id.btnResetStats);
+
+            // Create network speed gauge
+            FrameLayout networkGraphContainer = findViewById(R.id.networkGraphContainer);
+            if (networkGraphContainer != null) {
+                networkGraphContainer.removeAllViews();
+
+                networkSpeedView = new NetworkSpeedGaugeView(this);
+                networkGraphContainer.addView(networkSpeedView, new FrameLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT));
+            }
+
+            // Set up reset button
+            if (btnResetStats != null) {
+                btnResetStats.setOnClickListener(v -> {
+                    if (networkStatsTracker != null) {
+                        networkStatsTracker.stopTracking();
+                        networkStatsTracker.startTracking();
+                        if (networkSpeedView != null) {
+                            networkSpeedView.reset();
+                        }
+                        addLog("Network statistics reset");
+                    }
+                });
+            }
+        }
+
     }
+
+
 
     /**
      * Set up the "New WebView Per Request" switch
@@ -1063,6 +1148,82 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
                 addLog("IP rotation completed");
             }
         });
+    }
+
+
+    private void onNetworkStatsChanged(NetworkStats stats) {
+        if (stats == null) return;
+
+        // Update speed gauge
+        if (networkSpeedView != null) {
+            networkSpeedView.addNetworkStats(stats);
+        }
+
+        // Update speed text views
+        runOnUiThread(() -> {
+            TextView tvDownloadSpeed = findViewById(R.id.tvDownloadSpeed);
+            TextView tvUploadSpeed = findViewById(R.id.tvUploadSpeed);
+
+            if (tvDownloadSpeed != null) {
+                tvDownloadSpeed.setText(NetworkStatsTracker.formatSpeed(stats.getDownloadSpeed()));
+            }
+
+            if (tvUploadSpeed != null) {
+                tvUploadSpeed.setText(NetworkStatsTracker.formatSpeed(stats.getUploadSpeed()));
+            }
+        });
+    }
+
+    private void onSessionDataChanged(NetworkSession session) {
+        if (session == null) return;
+
+        runOnUiThread(() -> {
+            // Update totals
+            TextView tvDownloadTotal = findViewById(R.id.tvDownloadTotal);
+            TextView tvUploadTotal = findViewById(R.id.tvUploadTotal);
+            TextView tvTotalData = findViewById(R.id.tvTotalData);
+            TextView tvRequestCount = findViewById(R.id.tvRequestCount);
+            TextView tvSessionDuration = findViewById(R.id.tvSessionDuration);
+            TextView tvNetworkStatus = findViewById(R.id.tvNetworkStatus);
+
+            if (tvDownloadTotal != null) {
+                tvDownloadTotal.setText(NetworkStatsTracker.formatBytes(session.getTotalBytesDownloaded()));
+            }
+
+            if (tvUploadTotal != null) {
+                tvUploadTotal.setText(NetworkStatsTracker.formatBytes(session.getTotalBytesUploaded()));
+            }
+
+            if (tvTotalData != null) {
+                tvTotalData.setText(NetworkStatsTracker.formatBytes(session.getTotalBytes()));
+            }
+
+            if (tvRequestCount != null) {
+                tvRequestCount.setText("Requests: " + session.getRequestCount());
+            }
+
+            if (tvSessionDuration != null) {
+                long durationSec = session.getDurationMs() / 1000;
+                String durationText = String.format("%02d:%02d", durationSec / 60, durationSec % 60);
+                tvSessionDuration.setText("Duration: " + durationText);
+            }
+
+            if (tvNetworkStatus != null) {
+                tvNetworkStatus.setText("Monitoring: " + (session.isActive() ? "On" : "Off"));
+                tvNetworkStatus.setTextColor(getResources().getColor(
+                        session.isActive() ? R.color.status_success : R.color.medium_gray));
+            }
+        });
+    }
+
+    // Method to periodically update network stats
+    private void updateNetworkStats() {
+        if (networkStatsTracker == null) return;
+
+        NetworkSession session = networkStatsTracker.getCurrentSession();
+        if (session != null) {
+            onSessionDataChanged(session);
+        }
     }
 
 
