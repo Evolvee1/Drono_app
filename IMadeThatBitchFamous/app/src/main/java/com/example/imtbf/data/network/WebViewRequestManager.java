@@ -344,6 +344,50 @@ public class WebViewRequestManager {
         }
     }
 
+    // In WebViewRequestManager where you configure WebView before loading
+    private void prepareWebViewForInstagram(WebView webView, DeviceProfile deviceProfile) {
+        if (deviceProfile.isInstagramApp()) {
+            CookieManager cookieManager = CookieManager.getInstance();
+            cookieManager.setAcceptCookie(true);
+            cookieManager.setAcceptThirdPartyCookies(webView, true);
+
+            // Add Instagram-specific cookies
+            String deviceId = generateRandomInstagramDeviceId();
+            cookieManager.setCookie("instagram.com", "ig_did=" + deviceId);
+            cookieManager.setCookie("instagram.com", "mid=" + generateRandomMid());
+            cookieManager.setCookie("instagram.com", "ig_nrcb=1");
+            cookieManager.setCookie("instagram.com", "ds_user_id=" + generateRandomUserId());
+
+            cookieManager.flush();
+        }
+    }
+
+    private String generateRandomInstagramDeviceId() {
+        return UUID.randomUUID().toString();
+    }
+
+    private String generateRandomMid() {
+        return "Y" +
+                base64UrlEncode(generateRandomBytes(8)) +
+                base64UrlEncode(generateRandomBytes(8));
+    }
+
+    private String generateRandomUserId() {
+        return String.valueOf(1000000000 + random.nextInt(900000000));
+    }
+
+    private byte[] generateRandomBytes(int length) {
+        byte[] bytes = new byte[length];
+        random.nextBytes(bytes);
+        return bytes;
+    }
+
+    private String base64UrlEncode(byte[] data) {
+        String base64 = android.util.Base64.encodeToString(data, android.util.Base64.NO_WRAP);
+        return base64.replace('+', '-').replace('/', '_');
+    }
+
+
     /**
      * Get realistic browser headers for WebView request, with option to add unique visitor info
      */
@@ -363,14 +407,78 @@ public class WebViewRequestManager {
         }
         headers.put("User-Agent", userAgent);
 
-        // Standard browser headers
-        headers.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-        headers.put("Accept-Language", "en-US,en;q=0.5");
-        headers.put("Connection", "keep-alive");
-        headers.put("Upgrade-Insecure-Requests", "1");
+        // Check if this is an Instagram app profile
+        if (deviceProfile.isInstagramApp()) {
+            // Instagram app-specific headers
+            headers.put("X-IG-App-ID", "936619743392459");
+            headers.put("X-Instagram-AJAX", "1");
 
-        // Security and privacy headers that real browsers send
-        headers.put("DNT", "1"); // Do Not Track
+            // Add Accept language for Slovakia
+            headers.put("Accept-Language", "sk-SK, sk;q=0.9, en-US;q=0.8, en;q=0.7");
+
+            // Add random connection type with bias toward mobile connections
+            String connectionType;
+            float connChoice = random.nextFloat();
+            if (connChoice < 0.40f) { // 40% WiFi (previously 55%)
+                connectionType = "WIFI";
+            } else if (connChoice < 0.70f) { // 30% 4G/LTE (previously 25%)
+                connectionType = random.nextBoolean() ? "MOBILE(LTE)" : "MOBILE(4G)";
+            } else if (connChoice < 0.95f) { // 25% 5G (previously 15%)
+                connectionType = "MOBILE(5G)";
+            } else { // 5% 3G (unchanged)
+                connectionType = "MOBILE(3G)";
+            }
+
+            // Add platform-specific headers
+            if (deviceProfile.getPlatform().equals(DeviceProfile.PLATFORM_ANDROID)) {
+                // Android-specific Instagram headers
+                String androidId = generateRandomAndroidId();
+                headers.put("X-IG-Android-ID", androidId);
+                headers.put("X-IG-Connection-Type", connectionType);
+                headers.put("X-IG-Capabilities", "3brTvw==");
+                headers.put("X-IG-App-Locale", "sk_SK");
+                headers.put("X-IG-Device-Locale", "sk_SK");
+                headers.put("X-IG-Mapped-Locale", "sk_SK");
+                headers.put("X-IG-Bandwidth-Speed-KBPS", String.valueOf(1000 + random.nextInt(9000)));
+                headers.put("X-IG-Bandwidth-TotalBytes-B", String.valueOf(1000000 + random.nextInt(9000000)));
+                headers.put("X-IG-Bandwidth-TotalTime-MS", String.valueOf(100 + random.nextInt(900)));
+
+                // Instagram app on Android uses a different referrer
+                headers.put("Referer", "https://www.instagram.com/android-app/");
+            } else if (deviceProfile.getPlatform().equals(DeviceProfile.PLATFORM_IOS)) {
+                // iOS-specific Instagram headers
+                headers.put("X-IG-iOS-Version", "17.0");
+                headers.put("X-IG-Connection-Type", connectionType);
+                headers.put("X-IG-Capabilities", "36r/F/8=");
+                headers.put("X-IG-App-Locale", "sk_SK");
+                headers.put("X-IG-Device-Locale", "sk_SK");
+                headers.put("X-IG-Mapped-Locale", "sk_SK");
+
+                // Instagram app on iOS uses a different referrer
+                headers.put("Referer", "https://www.instagram.com/ios-app/");
+            }
+        } else {
+            // Browser headers - use these for non-Instagram app traffic
+            headers.put("Origin", Constants.INSTAGRAM_REFERER);
+            headers.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+            headers.put("Accept-Language", "sk-SK,sk;q=0.9,en-US;q=0.8,en;q=0.7");
+            headers.put("DNT", "1");
+
+            // Additional browser-specific headers
+            if (deviceProfile.isMobile()) {
+                // Mobile browser
+                headers.put("Sec-Fetch-Mode", "navigate");
+                headers.put("Sec-Fetch-Site", "same-origin");
+                headers.put("Sec-Fetch-User", "?1");
+            } else {
+                // Desktop browser
+                headers.put("Sec-Fetch-Dest", "document");
+                headers.put("Sec-Fetch-Mode", "navigate");
+                headers.put("Sec-Fetch-Site", "same-origin");
+                headers.put("Sec-Fetch-User", "?1");
+                headers.put("TE", "trailers");
+            }
+        }
 
         // Add cache control headers for better uniqueness
         if (addUniqueVisitor) {
@@ -380,6 +488,14 @@ public class WebViewRequestManager {
         }
 
         return headers;
+    }
+
+    private String generateRandomAndroidId() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 16; i++) {
+            sb.append(Integer.toHexString(random.nextInt(16)));
+        }
+        return sb.toString();
     }
 
     /**
@@ -880,6 +996,23 @@ public class WebViewRequestManager {
 
         // If we get here, the URL is either already a web URL or couldn't be processed
         return url;
+    }
+
+    private void simulateInstagramAppBehavior(WebView webView) {
+        String js =
+                "if (typeof window.__igEnabled === 'undefined') {" +
+                        "  window.__igEnabled = true;" +
+                        "  window.__igExploreMode = 'discover';" +
+                        "  window.__igNativeAssetLoader = true;" +
+                        "  window.navigator.connection = {" +
+                        "    effectiveType: '" + (random.nextBoolean() ? "4g" : "5g") + "'," +
+                        "    rtt: " + (10 + random.nextInt(90)) + "," +
+                        "    downlink: " + (5 + random.nextInt(45)) + "," +
+                        "    saveData: false" +
+                        "  };" +
+                        "}";
+
+        webView.evaluateJavascript(js, null);
     }
 
     /**

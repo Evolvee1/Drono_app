@@ -61,12 +61,29 @@ public class UserAgentData {
         macUserAgents.add("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/112.0");
         macUserAgents.add("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 OPR/98.0.0.0");
 
-        // Initialize Instagram app user agents
-        instagramAppUserAgents.add("Instagram 243.0.0.16.111 Android (31/12; 480dpi; 1080x2220; Google/google; Pixel 6; oriole; arm64-v8a; en_US; 383877306)");
-        instagramAppUserAgents.add("Instagram 244.0.0.17.110 Android (33/13; 420dpi; 1080x2400; samsung; SM-S918B; CS2; arm64-v8a; en_US; 387809238)");
-        instagramAppUserAgents.add("Instagram 244.1.0.19.110 Android (31/12; 320dpi; 720x1600; Samsung; SM-A125F; a12; mt6765; en_SK; 387809255)");
-        instagramAppUserAgents.add("Instagram 243.1.0.14.111 iOS (16_6_1; iPhone12,1; en_US; en-US; scale=2.00; 828x1792; 383877311)");
-        instagramAppUserAgents.add("Instagram 245.0.0.16.111 iOS (17_2; iPhone15,4; en_SK; en-SK; scale=3.00; 1170x2532; 390353252)");
+        // Initialize Instagram app user agents - UPDATED with more recent and Slovak (sk_SK) versions
+        instagramAppUserAgents.add("Instagram 292.0.0.29.122 Android (33/13; 480dpi; 1080x2400; Google/google; Pixel 7; panther; arm64-v8a; sk_SK; 458733883)");
+        instagramAppUserAgents.add("Instagram 293.1.0.21.111 Android (33/13; 420dpi; 1080x2340; samsung; SM-S918B; CS2; arm64-v8a; sk_SK; 459881137)");
+        instagramAppUserAgents.add("Instagram 294.0.0.26.117 Android (31/12; 320dpi; 720x1600; Samsung; SM-A125F; a12; mt6765; sk_SK; 461020179)");
+        instagramAppUserAgents.add("Instagram 295.0.0.14.109 Android (32/12; 440dpi; 1080x2340; Xiaomi/Redmi; Redmi Note 11; spes; qcom; sk_SK; 462519124)");
+        instagramAppUserAgents.add("Instagram 291.1.0.34.111 Android (30/11; 440dpi; 1080x2400; OnePlus; Nord CE 2; OP535BL1; mt6877; sk_SK; 457189239)");
+        instagramAppUserAgents.add("Instagram 296.0.0.31.111 Android (33/13; 480dpi; 1080x2340; Motorola; moto g71 5G; corfur; qcom; sk_SK; 463921753)");
+        instagramAppUserAgents.add("Instagram 294.0.0.26.117 Android (29/10; 420dpi; 1080x2220; Huawei; P30 Lite; HWMAR; kirin710; sk_SK; 461020179)");
+        instagramAppUserAgents.add("Instagram 297.0.0.29.101 Android (34/14; 560dpi; 1440x3200; Samsung; SM-S928B; CS3; exynos2400; sk_SK; 465283622)");
+        instagramAppUserAgents.add("Instagram 295.0.0.14.109 Android (30/11; 280dpi; 720x1560; POCO; M3; angelica; qcom; sk_SK; 462519124)");
+        instagramAppUserAgents.add("Instagram 293.0.0.27.111 Android (31/12; 440dpi; 1080x2400; Xiaomi; Redmi Note 10 Pro; sweet; qcom; sk_SK; 459881122)");
+
+        // iOS Instagram app user agents - UPDATED with Slovak (sk_SK) versions
+        instagramAppUserAgents.add("Instagram 291.0.0.31.111 iOS (17_5_1; iPhone14,7; sk_SK; sk-SK; scale=3.00; 1170x2532; 457142244)");
+        instagramAppUserAgents.add("Instagram 292.0.0.25.111 iOS (17_2; iPhone15,4; sk_SK; sk-SK; scale=3.00; 1179x2556; 458733883)");
+        instagramAppUserAgents.add("Instagram 293.1.0.21.111 iOS (16_6_1; iPhone12,1; sk_SK; sk-SK; scale=2.00; 828x1792; 459881137)");
+        instagramAppUserAgents.add("Instagram 294.0.0.26.117 iOS (16_0; iPad13,1; sk_SK; sk-SK; scale=2.00; 1620x2160; 461020179)");
+        instagramAppUserAgents.add("Instagram 290.0.0.16.111 iOS (15_7_8; iPhone11,8; sk_SK; sk-SK; scale=2.00; 828x1792; 456213364)");
+        instagramAppUserAgents.add("Instagram 295.0.0.14.109 iOS (17_5_1; iPhone15,5; sk_SK; sk-SK; scale=3.00; 1290x2796; 462519124)");
+        instagramAppUserAgents.add("Instagram 296.0.0.31.111 iOS (17_5; iPad12,1; sk_SK; sk-SK; scale=2.00; 1620x2160; 463921753)");
+        instagramAppUserAgents.add("Instagram 294.0.0.26.117 iOS (16_7; iPhone13,4; sk_SK; sk-SK; scale=3.00; 1284x2778; 461020179)");
+        instagramAppUserAgents.add("Instagram 297.0.0.29.101 iOS (17_6; iPhone14,3; sk_SK; sk-SK; scale=3.00; 1170x2532; 465283622)");
+        instagramAppUserAgents.add("Instagram 298.0.0.23.118 iOS (17_6; iPhone14,8; sk_SK; sk-SK; scale=3.00; 1179x2556; 467123489)");
 
         // Map by device type
         deviceTypeUserAgents.put(DeviceProfile.TYPE_MOBILE, new ArrayList<>());
@@ -122,8 +139,8 @@ public class UserAgentData {
         ageDistributionSlovakia.put("65+", 0.02f);
 
         Map<String, Float> deviceDistributionSlovakia = new HashMap<>();
-        deviceDistributionSlovakia.put(DeviceProfile.TYPE_MOBILE, 0.68f);
-        deviceDistributionSlovakia.put(DeviceProfile.TYPE_DESKTOP, 0.27f);
+        deviceDistributionSlovakia.put(DeviceProfile.TYPE_MOBILE, 0.90f);
+        deviceDistributionSlovakia.put(DeviceProfile.TYPE_DESKTOP, 0.05f);
         deviceDistributionSlovakia.put(DeviceProfile.TYPE_TABLET, 0.05f);
 
         Map<String, Float> platformDistributionSlovakia = new HashMap<>();
@@ -242,8 +259,8 @@ public class UserAgentData {
         boolean isInstagramApp = false;
 
         if (deviceType.equals(DeviceProfile.TYPE_MOBILE) || deviceType.equals(DeviceProfile.TYPE_TABLET)) {
-            // Mobile devices should use Instagram app user agent more frequently
-            if (random.nextFloat() < 0.7f) { // 70% chance for mobile to use Instagram app
+            // UPDATED: Increased chance to use Instagram app user agent from 70% to 95%
+            if (random.nextFloat() < 0.97f) { // 95% chance for mobile to use Instagram app
                 userAgent = getRandomInstagramAppUserAgent();
                 isInstagramApp = true;
             } else {
