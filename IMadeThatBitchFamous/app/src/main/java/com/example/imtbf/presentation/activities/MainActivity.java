@@ -863,6 +863,9 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
     /**
      * Start the simulation.
      */
+    /**
+     * Start the simulation.
+     */
     private void startSimulation() {
         // Get input values
         String targetUrl = binding.etTargetUrl.getText().toString().trim();
@@ -883,10 +886,14 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         timingDistributor.setMinIntervalSeconds(minInterval);
         timingDistributor.setMaxIntervalSeconds(maxInterval);
 
-        if (trafficDistributionManager != null &&
-                trafficDistributionManager.isScheduledModeEnabled()) {
-            // Start in scheduled mode
-            trafficDistributionManager.startDistribution();
+        // Reset the traffic distribution manager to ensure clean state
+        if (trafficDistributionManager != null) {
+            trafficDistributionManager.resetDistribution();
+
+            if (trafficDistributionManager.isScheduledModeEnabled()) {
+                // Start in scheduled mode
+                trafficDistributionManager.startDistribution();
+            }
         }
 
         // Update UI
