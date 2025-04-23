@@ -1,8 +1,6 @@
 package com.example.imtbf.domain.simulation;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 
 import com.example.imtbf.data.models.DeviceProfile;
 import com.example.imtbf.data.models.SimulationSession;
@@ -171,17 +169,6 @@ public class SessionManager {
      * @param useWebView Whether to use WebView for requests
      * @return CompletableFuture that completes when the session is started
      */
-    /**
-     * Start a new simulation session with WebView support.
-     * @param targetUrl Target URL
-     * @param iterations Number of iterations
-     * @param useRandomDeviceProfile Whether to use random device profiles
-     * @param rotateIp Whether to rotate IP addresses
-     * @param delayMin Minimum delay between iterations in seconds
-     * @param delayMax Maximum delay between iterations in seconds
-     * @param useWebView Whether to use WebView for requests
-     * @return CompletableFuture that completes when the session is started
-     */
     public CompletableFuture<Void> startSession(
             String targetUrl,
             int iterations,
@@ -198,12 +185,6 @@ public class SessionManager {
 
         isRunning = true;
         usedIpAddresses.clear();
-        lastRequestTime = 0;  // Reset the last request time
-
-        // Reset any stale progress state
-        if (progressListener != null) {
-            progressListener.onProgressUpdated(0, iterations);
-        }
 
         // Update timing distributor with custom delay values
         timingDistributor.setMinIntervalSeconds(delayMin);
@@ -244,19 +225,9 @@ public class SessionManager {
                     int currentIteration = i + 1;
                     Logger.i(TAG, "Starting iteration " + currentIteration + "/" + iterations);
 
-                    // Update progress - on the main thread to avoid race conditions
+                    // Update progress
                     if (progressListener != null) {
-                        final int finalCurrentIteration = currentIteration;
-
-                        // If context is available, use it to run on the main thread
-                        if (context instanceof Context) {
-                            new Handler(Looper.getMainLooper()).post(() -> {
-                                progressListener.onProgressUpdated(finalCurrentIteration, iterations);
-                            });
-                        } else {
-                            // Otherwise just call directly
-                            progressListener.onProgressUpdated(currentIteration, iterations);
-                        }
+                        progressListener.onProgressUpdated(currentIteration, iterations);
                     }
 
                     // Get current IP
@@ -418,6 +389,11 @@ public class SessionManager {
      * This is called by the TrafficDistributionManager when using scheduled distribution.
      * @return True if request was initiated successfully
      */
+    /**
+     * Execute a single scheduled request.
+     * This is called by the TrafficDistributionManager when using scheduled distribution.
+     * @return True if request was initiated successfully
+     */
     public boolean executeScheduledRequest() {
         if (scheduledRequestInProgress || !isRunning()) {
             Logger.w(TAG, "Cannot execute scheduled request: " +
@@ -451,10 +427,8 @@ public class SessionManager {
                             ((InstagramTrafficSimulatorApp)((Context)context).getApplicationContext())
                                     .getPreferencesManager().getUseWebViewMode());
 
-            final DeviceProfile finalDeviceProfile = deviceProfile;
-
             if (useWebView && webViewRequestManager != null) {
-                webViewRequestManager.makeRequest(targetUrl, finalDeviceProfile, currentSession,
+                webViewRequestManager.makeRequest(targetUrl, deviceProfile, currentSession,
                         new WebViewRequestManager.RequestCallback() {
                             @Override
                             public void onSuccess(int statusCode, long responseTimeMs) {
@@ -471,7 +445,7 @@ public class SessionManager {
                         });
             } else {
                 // Fallback to HTTP request
-                httpRequestManager.makeRequest(targetUrl, finalDeviceProfile, currentSession,
+                httpRequestManager.makeRequest(targetUrl, deviceProfile, currentSession,
                         new HttpRequestManager.RequestCallback() {
                             @Override
                             public void onSuccess(int statusCode, long responseTimeMs) {
