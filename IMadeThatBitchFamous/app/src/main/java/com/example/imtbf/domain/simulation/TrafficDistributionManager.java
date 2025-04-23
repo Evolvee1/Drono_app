@@ -150,35 +150,10 @@ public class TrafficDistributionManager {
     }
 
     /**
-     * Reset the distribution state completely.
-     * This should be called before starting a new distribution.
-     */
-    public void resetDistribution() {
-        // Stop any running distribution
-        stopDistribution();
-
-        // Reset state variables
-        currentIndex = 0;
-        startTimeMs = 0;
-
-        // Ensure pending requests are completely cleared
-        pendingRequests.clear();
-
-        // Log the reset operation
-        Logger.i(TAG, "Traffic distribution state completely reset");
-
-        // Notify listeners of reset state
-        notifyStatusChanged(false, 0);
-    }
-
-    /**
      * Start the traffic distribution according to the schedule.
      * @return True if started successfully
      */
     public boolean startDistribution() {
-        // Always reset state before starting to avoid any issues
-        resetDistribution();
-
         if (isRunning.get()) {
             Logger.w(TAG, "Distribution already running");
             return false;
@@ -189,13 +164,14 @@ public class TrafficDistributionManager {
             return false;
         }
 
-        // Set state
+        // Reset state
         currentIndex = 0;
         startTimeMs = System.currentTimeMillis();
         isRunning.set(true);
+        pendingRequests.clear();
 
-        // Schedule the first request with a slight delay to ensure UI is ready
-        handler.postDelayed(this::scheduleNextRequest, 500);
+        // Schedule the first request
+        scheduleNextRequest();
 
         // Notify listeners
         notifyStatusChanged(true, 0);
@@ -211,8 +187,6 @@ public class TrafficDistributionManager {
         if (isRunning.getAndSet(false)) {
             // Cancel all pending requests
             handler.removeCallbacksAndMessages(null);
-
-            // Clear the pending requests list to prevent them from being rescheduled
             pendingRequests.clear();
 
             Logger.i(TAG, "Stopped traffic distribution");
@@ -242,11 +216,9 @@ public class TrafficDistributionManager {
      */
     public void resumeDistribution() {
         if (!isRunning.getAndSet(true)) {
-            // Reschedule pending requests individually with proper delays
-            long currentTime = System.currentTimeMillis();
+            // Reschedule pending requests
             for (Runnable request : pendingRequests) {
-                // Post with a small delay between each to avoid batch execution
-                handler.postDelayed(request, 250);
+                handler.post(request);
             }
 
             Logger.i(TAG, "Resumed traffic distribution");
@@ -305,9 +277,6 @@ public class TrafficDistributionManager {
             // All requests complete
             Logger.i(TAG, "Traffic distribution completed");
             isRunning.set(false);
-
-            // Clear pending requests since we're done
-            pendingRequests.clear();
 
             // Notify listeners
             notifyStatusChanged(false, 100);
