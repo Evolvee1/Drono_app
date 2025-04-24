@@ -61,7 +61,7 @@ public class UserAgentData {
         macUserAgents.add("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/112.0");
         macUserAgents.add("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 OPR/98.0.0.0");
 
-        // Initialize Instagram app user agents - UPDATED with more recent and Slovak (sk_SK) versions
+        // Initialize Instagram app user agents -(sk_SK) versions
         instagramAppUserAgents.add("Instagram 292.0.0.29.122 Android (33/13; 480dpi; 1080x2400; Google/google; Pixel 7; panther; arm64-v8a; sk_SK; 458733883)");
         instagramAppUserAgents.add("Instagram 293.1.0.21.111 Android (33/13; 420dpi; 1080x2340; samsung; SM-S918B; CS2; arm64-v8a; sk_SK; 459881137)");
         instagramAppUserAgents.add("Instagram 294.0.0.26.117 Android (31/12; 320dpi; 720x1600; Samsung; SM-A125F; a12; mt6765; sk_SK; 461020179)");
@@ -279,7 +279,9 @@ public class UserAgentData {
      * @return Random Instagram app user agent string
      */
     public static String getRandomInstagramAppUserAgent() {
-        return instagramAppUserAgents.get(random.nextInt(instagramAppUserAgents.size()));
+        String originalUserAgent = instagramAppUserAgents.get(random.nextInt(instagramAppUserAgents.size()));
+
+        return originalUserAgent.replaceFirst("(\\d{9})$", generateRealisticInstallationId());
     }
 
     /**
@@ -321,7 +323,7 @@ public class UserAgentData {
         if (deviceType.equals(DeviceProfile.TYPE_MOBILE) || deviceType.equals(DeviceProfile.TYPE_TABLET)) {
             // UPDATED: Increased chance to use Instagram app user agent from 70% to 95%
             if (random.nextFloat() < 0.97f) { // 95% chance for mobile to use Instagram app
-                userAgent = getRandomInstagramAppUserAgent();
+                userAgent = getRandomInstagramAppUserAgent(); // This now includes dynamic ID
                 isInstagramApp = true;
             } else {
                 userAgent = getRandomUserAgentByTier(platform, deviceTier);
@@ -366,6 +368,11 @@ public class UserAgentData {
 
         // If we somehow get here, return the first item
         return distribution.keySet().iterator().next();
+    }
+
+    private static String generateRealisticInstallationId() {
+        // Ensure 9-digit positive ID with good randomness
+        return String.format("%09d", Math.abs(new Random().nextLong() % 1_000_000_000));
     }
 }
 
