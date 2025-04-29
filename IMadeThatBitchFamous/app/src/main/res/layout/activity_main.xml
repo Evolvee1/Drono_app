@@ -30,19 +30,20 @@
                 android:background="@color/primary_light">
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="100dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="Configuration"
-                    android:textAppearance="?attr/textAppearanceHeadline6"/>
+                    android:textAppearance="?attr/textAppearanceHeadline6" />
 
                 <ImageButton
                     android:id="@+id/btnToggleConfig"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@android:drawable/arrow_up_float"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:scaleType="centerInside"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Toggle Configuration"/>
+                    android:contentDescription="Toggle Configuration"
+                    android:src="@android:drawable/arrow_up_float" />
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView

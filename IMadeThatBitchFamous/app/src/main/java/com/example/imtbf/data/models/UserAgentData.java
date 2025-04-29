@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.security.SecureRandom;
 
 
 /**
@@ -30,6 +31,8 @@ public class UserAgentData {
     private static final List<String> windowsUserAgents = new ArrayList<>();
     private static final List<String> macUserAgents = new ArrayList<>();
     private static final List<String> instagramAppUserAgents = new ArrayList<>();
+
+    private static final SecureRandom secureRandom = new SecureRandom();
 
     // Initialize with some sample user agents - this would be expanded in a real implementation
     static {
@@ -61,58 +64,57 @@ public class UserAgentData {
         macUserAgents.add("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/112.0");
         macUserAgents.add("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36 OPR/98.0.0.0");
 
-        // Initialize Instagram app user agents -(sk_SK) versions
-        instagramAppUserAgents.add("Instagram 292.0.0.29.122 Android (33/13; 480dpi; 1080x2400; Google/google; Pixel 7; panther; arm64-v8a; sk_SK; 458733883)");
-        instagramAppUserAgents.add("Instagram 293.1.0.21.111 Android (33/13; 420dpi; 1080x2340; samsung; SM-S918B; CS2; arm64-v8a; sk_SK; 459881137)");
-        instagramAppUserAgents.add("Instagram 294.0.0.26.117 Android (31/12; 320dpi; 720x1600; Samsung; SM-A125F; a12; mt6765; sk_SK; 461020179)");
-        instagramAppUserAgents.add("Instagram 295.0.0.14.109 Android (32/12; 440dpi; 1080x2340; Xiaomi/Redmi; Redmi Note 11; spes; qcom; sk_SK; 462519124)");
-        instagramAppUserAgents.add("Instagram 291.1.0.34.111 Android (30/11; 440dpi; 1080x2400; OnePlus; Nord CE 2; OP535BL1; mt6877; sk_SK; 457189239)");
-        instagramAppUserAgents.add("Instagram 296.0.0.31.111 Android (33/13; 480dpi; 1080x2340; Motorola; moto g71 5G; corfur; qcom; sk_SK; 463921753)");
-        instagramAppUserAgents.add("Instagram 294.0.0.26.117 Android (29/10; 420dpi; 1080x2220; Huawei; P30 Lite; HWMAR; kirin710; sk_SK; 461020179)");
-        instagramAppUserAgents.add("Instagram 297.0.0.29.101 Android (34/14; 560dpi; 1440x3200; Samsung; SM-S928B; CS3; exynos2400; sk_SK; 465283622)");
-        instagramAppUserAgents.add("Instagram 295.0.0.14.109 Android (30/11; 280dpi; 720x1560; POCO; M3; angelica; qcom; sk_SK; 462519124)");
-        instagramAppUserAgents.add("Instagram 293.0.0.27.111 Android (31/12; 440dpi; 1080x2400; Xiaomi; Redmi Note 10 Pro; sweet; qcom; sk_SK; 459881122)");
+        instagramAppUserAgents.add("Instagram 292.0.0.29.122 Android (33/13; 480dpi; 1080x2400; Google/google; Pixel 7; panther; arm64-v8a; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 293.1.0.21.111 Android (33/13; 420dpi; 1080x2340; samsung; SM-S918B; CS2; arm64-v8a; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 294.0.0.26.117 Android (31/12; 320dpi; 720x1600; Samsung; SM-A125F; a12; mt6765; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 295.0.0.14.109 Android (32/12; 440dpi; 1080x2340; Xiaomi/Redmi; Redmi Note 11; spes; qcom; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 291.1.0.34.111 Android (30/11; 440dpi; 1080x2400; OnePlus; Nord CE 2; OP535BL1; mt6877; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 296.0.0.31.111 Android (33/13; 480dpi; 1080x2340; Motorola; moto g71 5G; corfur; qcom; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 294.0.0.26.117 Android (29/10; 420dpi; 1080x2220; Huawei; P30 Lite; HWMAR; kirin710; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 297.0.0.29.101 Android (34/14; 560dpi; 1440x3200; Samsung; SM-S928B; CS3; exynos2400; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 295.0.0.14.109 Android (30/11; 280dpi; 720x1560; POCO; M3; angelica; qcom; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 293.0.0.27.111 Android (31/12; 440dpi; 1080x2400; Xiaomi; Redmi Note 10 Pro; sweet; qcom; sk_SK; " + generateInstagramInstallationId() + ")");
 
         // iOS Instagram app user agents - UPDATED with Slovak (sk_SK) versions
-        instagramAppUserAgents.add("Instagram 291.0.0.31.111 iOS (17_5_1; iPhone14,7; sk_SK; sk-SK; scale=3.00; 1170x2532; 457142244)");
-        instagramAppUserAgents.add("Instagram 292.0.0.25.111 iOS (17_2; iPhone15,4; sk_SK; sk-SK; scale=3.00; 1179x2556; 458733883)");
-        instagramAppUserAgents.add("Instagram 293.1.0.21.111 iOS (16_6_1; iPhone12,1; sk_SK; sk-SK; scale=2.00; 828x1792; 459881137)");
-        instagramAppUserAgents.add("Instagram 294.0.0.26.117 iOS (16_0; iPad13,1; sk_SK; sk-SK; scale=2.00; 1620x2160; 461020179)");
-        instagramAppUserAgents.add("Instagram 290.0.0.16.111 iOS (15_7_8; iPhone11,8; sk_SK; sk-SK; scale=2.00; 828x1792; 456213364)");
-        instagramAppUserAgents.add("Instagram 295.0.0.14.109 iOS (17_5_1; iPhone15,5; sk_SK; sk-SK; scale=3.00; 1290x2796; 462519124)");
-        instagramAppUserAgents.add("Instagram 296.0.0.31.111 iOS (17_5; iPad12,1; sk_SK; sk-SK; scale=2.00; 1620x2160; 463921753)");
-        instagramAppUserAgents.add("Instagram 294.0.0.26.117 iOS (16_7; iPhone13,4; sk_SK; sk-SK; scale=3.00; 1284x2778; 461020179)");
-        instagramAppUserAgents.add("Instagram 297.0.0.29.101 iOS (17_6; iPhone14,3; sk_SK; sk-SK; scale=3.00; 1170x2532; 465283622)");
-        instagramAppUserAgents.add("Instagram 298.0.0.23.118 iOS (17_6; iPhone14,8; sk_SK; sk-SK; scale=3.00; 1179x2556; 467123489)");
+        instagramAppUserAgents.add("Instagram 291.0.0.31.111 iOS (17_5_1; iPhone14,7; sk_SK; sk-SK; scale=3.00; 1170x2532; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 292.0.0.25.111 iOS (17_2; iPhone15,4; sk_SK; sk-SK; scale=3.00; 1179x2556; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 293.1.0.21.111 iOS (16_6_1; iPhone12,1; sk_SK; sk-SK; scale=2.00; 828x1792; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 294.0.0.26.117 iOS (16_0; iPad13,1; sk_SK; sk-SK; scale=2.00; 1620x2160; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 290.0.0.16.111 iOS (15_7_8; iPhone11,8; sk_SK; sk-SK; scale=2.00; 828x1792; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 295.0.0.14.109 iOS (17_5_1; iPhone15,5; sk_SK; sk-SK; scale=3.00; 1290x2796; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 296.0.0.31.111 iOS (17_5; iPad12,1; sk_SK; sk-SK; scale=2.00; 1620x2160; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 294.0.0.26.117 iOS (16_7; iPhone13,4; sk_SK; sk-SK; scale=3.00; 1284x2778; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 297.0.0.29.101 iOS (17_6; iPhone14,3; sk_SK; sk-SK; scale=3.00; 1170x2532; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 298.0.0.23.118 iOS (17_6; iPhone14,8; sk_SK; sk-SK; scale=3.00; 1179x2556; " + generateInstagramInstallationId() + ")");
 
         // Additional Android Instagram app user agents (2018-2020)
-        instagramAppUserAgents.add("Instagram 70.0.0.22.98 Android (26/8.0.0; 320dpi; 720x1280; Samsung; SM-A520F; a5y17lte; samsungexynos7880; sk_SK; 131181246)");
-        instagramAppUserAgents.add("Instagram 125.0.0.18.125 Android (28/9.0; 440dpi; 1080x2220; Xiaomi; Mi 9T; davinci; qcom; sk_SK; 195435559)");
-        instagramAppUserAgents.add("Instagram 167.0.0.24.120 Android (29/10; 380dpi; 1080x2280; OnePlus; ONEPLUS A6003; OnePlus6; qcom; sk_SK; 256099204)");
+        instagramAppUserAgents.add("Instagram 70.0.0.22.98 Android (26/8.0.0; 320dpi; 720x1280; Samsung; SM-A520F; a5y17lte; samsungexynos7880; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 125.0.0.18.125 Android (28/9.0; 440dpi; 1080x2220; Xiaomi; Mi 9T; davinci; qcom; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 167.0.0.24.120 Android (29/10; 380dpi; 1080x2280; OnePlus; ONEPLUS A6003; OnePlus6; qcom; sk_SK; " + generateInstagramInstallationId() + ")");
 
-// Additional Android Instagram app user agents (2021-2022)
-        instagramAppUserAgents.add("Instagram 231.1.0.17.107 Android (30/11; 420dpi; 1080x2340; Samsung; SM-A525F; a52q; qcom; sk_SK; 363904477)");
-        instagramAppUserAgents.add("Instagram 253.0.0.23.114 Android (31/12; 420dpi; 1080x2340; Xiaomi; M2101K6G; sweet; qcom; sk_SK; 400477857)");
-        instagramAppUserAgents.add("Instagram 275.0.0.27.98 Android (31/12; 420dpi; 1080x2340; Xiaomi; Redmi Note 11; spes; qcom; sk_SK; 437654768)");
+        // Additional Android Instagram app user agents (2021-2022)
+        instagramAppUserAgents.add("Instagram 231.1.0.17.107 Android (30/11; 420dpi; 1080x2340; Samsung; SM-A525F; a52q; qcom; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 253.0.0.23.114 Android (31/12; 420dpi; 1080x2340; Xiaomi; M2101K6G; sweet; qcom; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 275.0.0.27.98 Android (31/12; 420dpi; 1080x2340; Xiaomi; Redmi Note 11; spes; qcom; sk_SK; " + generateInstagramInstallationId() + ")");
 
-// Additional Android Instagram app user agents (2023-2025)
-        instagramAppUserAgents.add("Instagram 302.1.0.34.111 Android (33/13; 440dpi; 1080x2400; Samsung; SM-A536B; a53x; exynos1280; sk_SK; 480813658)");
-        instagramAppUserAgents.add("Instagram 324.0.0.47.119 Android (33/13; 440dpi; 1080x2400; Xiaomi; Redmi Note 12; tapas; qcom; sk_SK; 515281455)");
-        instagramAppUserAgents.add("Instagram 352.0.0.30.109 Android (34/14; 440dpi; 1080x2400; Xiaomi; 23030RAC7Y; ruby; mt6877t; sk_SK; 555777889)");
+        // Additional Android Instagram app user agents (2023-2025)
+        instagramAppUserAgents.add("Instagram 302.1.0.34.111 Android (33/13; 440dpi; 1080x2400; Samsung; SM-A536B; a53x; exynos1280; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 324.0.0.47.119 Android (33/13; 440dpi; 1080x2400; Xiaomi; Redmi Note 12; tapas; qcom; sk_SK; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 352.0.0.30.109 Android (34/14; 440dpi; 1080x2400; Xiaomi; 23030RAC7Y; ruby; mt6877t; sk_SK; " + generateInstagramInstallationId() + ")");
 
-// Additional iOS Instagram app user agents (2018-2020)
-        instagramAppUserAgents.add("Instagram 70.0.0.14.96 iOS (11_4_1; iPhone8,2; sk_SK; sk-SK; scale=2.61; 1080x1920; 119969894)");
-        instagramAppUserAgents.add("Instagram 123.0.0.21.114 iOS (13_3; iPhone11,8; sk_SK; sk-SK; scale=2.00; 828x1792; 193770178)");
-        instagramAppUserAgents.add("Instagram 165.1.0.29.119 iOS (14_0; iPhone12,1; sk_SK; sk-SK; scale=2.00; 828x1792; 255908746)");
+        // Additional iOS Instagram app user agents (2018-2020)
+        instagramAppUserAgents.add("Instagram 70.0.0.14.96 iOS (11_4_1; iPhone8,2; sk_SK; sk-SK; scale=2.61; 1080x1920; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 123.0.0.21.114 iOS (13_3; iPhone11,8; sk_SK; sk-SK; scale=2.00; 828x1792; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 165.1.0.29.119 iOS (14_0; iPhone12,1; sk_SK; sk-SK; scale=2.00; 828x1792; " + generateInstagramInstallationId() + ")");
 
-// Additional iOS Instagram app user agents (2021-2022)
-        instagramAppUserAgents.add("Instagram 234.0.0.10.111 iOS (15_0; iPhone13,2; sk_SK; sk-SK; scale=3.00; 1170x2532; 365867457)");
-        instagramAppUserAgents.add("Instagram 255.0.0.17.102 iOS (15_4; iPhone13,4; sk_SK; sk-SK; scale=3.00; 1284x2778; 402543332)");
+        // Additional iOS Instagram app user agents (2021-2022)
+        instagramAppUserAgents.add("Instagram 234.0.0.10.111 iOS (15_0; iPhone13,2; sk_SK; sk-SK; scale=3.00; 1170x2532; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 255.0.0.17.102 iOS (15_4; iPhone13,4; sk_SK; sk-SK; scale=3.00; 1284x2778; " + generateInstagramInstallationId() + ")");
 
-// Additional iOS Instagram app user agents (2023-2025)
-        instagramAppUserAgents.add("Instagram 304.0.0.36.108 iOS (16_4_1; iPhone15,3; sk_SK; sk-SK; scale=3.00; 1290x2796; 486752431)");
-        instagramAppUserAgents.add("Instagram 343.0.0.28.116 iOS (17_0; iPhone16,1; sk_SK; sk-SK; scale=3.00; 1179x2556; 546321789)");
-        instagramAppUserAgents.add("Instagram 360.0.0.31.109 iOS (17_3; iPhone15,5; sk_SK; sk-SK; scale=3.00; 1290x2796; 567891234)");
+        // Additional iOS Instagram app user agents (2023-2025)
+        instagramAppUserAgents.add("Instagram 304.0.0.36.108 iOS (16_4_1; iPhone15,3; sk_SK; sk-SK; scale=3.00; 1290x2796; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 343.0.0.28.116 iOS (17_0; iPhone16,1; sk_SK; sk-SK; scale=3.00; 1179x2556; " + generateInstagramInstallationId() + ")");
+        instagramAppUserAgents.add("Instagram 360.0.0.31.109 iOS (17_3; iPhone15,5; sk_SK; sk-SK; scale=3.00; 1290x2796; " + generateInstagramInstallationId() + ")");
 
         // Add older iPhones (2018-2020)
         iosUserAgents.add("Mozilla/5.0 (iPhone; CPU iPhone OS 13_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Mobile/15E148 Safari/604.1");
@@ -371,8 +373,47 @@ public class UserAgentData {
     }
 
     private static String generateRealisticInstallationId() {
-        // Ensure 9-digit positive ID with good randomness
-        return String.format("%09d", Math.abs(new Random().nextLong() % 1_000_000_000));
+        // Use SecureRandom for better randomness
+        long randomBase = Math.abs(secureRandom.nextLong());
+
+        // Ensure 9-digit format with additional entropy from timestamp
+        long timestamp = System.currentTimeMillis();
+        long combinedId = (randomBase + timestamp) % 1_000_000_000;
+
+        // Format to always be 9 digits
+        return String.format("%09d", Math.abs(combinedId));
+    }
+
+    private static String replaceInstallationId(String userAgent) {
+        return userAgent.replaceFirst("(\\d{9})$", generateRealisticInstallationId());
+    }
+
+    static {
+        // Modify Android Instagram app user agents
+        for (int i = 0; i < instagramAppUserAgents.size(); i++) {
+            if (instagramAppUserAgents.get(i).contains("Android")) {
+                instagramAppUserAgents.set(i, replaceInstallationId(instagramAppUserAgents.get(i)));
+            }
+        }
+
+        // Modify iOS Instagram app user agents
+        for (int i = 0; i < instagramAppUserAgents.size(); i++) {
+            if (instagramAppUserAgents.get(i).contains("iOS")) {
+                instagramAppUserAgents.set(i, replaceInstallationId(instagramAppUserAgents.get(i)));
+            }
+        }
+    }
+
+    private static String generateInstagramInstallationId() {
+        // Combine multiple sources of entropy for a more realistic ID
+        long baseRandom = Math.abs(new Random().nextLong());
+        long timestamp = System.currentTimeMillis();
+
+        // Create a deterministic but seemingly random 9-digit number
+        long installationId = (baseRandom + timestamp) % 1_000_000_000;
+
+        // Ensure it's always 9 digits
+        return String.format("%09d", Math.abs(installationId));
     }
 }
 
