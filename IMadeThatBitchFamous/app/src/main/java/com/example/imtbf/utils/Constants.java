@@ -114,6 +114,9 @@ public class Constants {
     public static final String PREF_HANDLE_MARKETING_REDIRECTS = "handle_marketing_redirects";
     public static final boolean DEFAULT_HANDLE_MARKETING_REDIRECTS = true;
 
+    public static final boolean DEBUG_MODE = true; // or false
+
+
     private Constants() {
         // Private constructor to prevent instantiation
     }
