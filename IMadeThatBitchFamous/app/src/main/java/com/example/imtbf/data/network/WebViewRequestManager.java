@@ -125,6 +125,12 @@ public class WebViewRequestManager {
                 try {
                     Logger.i(TAG, "Starting complete destruction of WebView ID: " + currentWebViewId);
 
+                    // Stop loading first
+                    webView.stopLoading();
+
+                    // Clear JavaScript interface if any
+                    webView.removeJavascriptInterface("BehaviorBridge");
+
                     // Remove from parent if attached
                     ViewParent parent = webView.getParent();
                     if (parent instanceof ViewGroup) {
@@ -132,8 +138,7 @@ public class WebViewRequestManager {
                         Logger.d(TAG, "WebView removed from parent view");
                     }
 
-                    // Stop any loading and clear all state
-                    webView.stopLoading();
+                    // Clear all state
                     webView.clearHistory();
                     webView.clearCache(true);
                     webView.clearFormData();
@@ -146,7 +151,7 @@ public class WebViewRequestManager {
                     cookieManager.flush();
                     WebStorage.getInstance().deleteAllData();
 
-                    // Try to clear as much as possible
+                    // Clear WebView database
                     try {
                         WebViewDatabase.getInstance(context).clearHttpAuthUsernamePassword();
                         WebViewDatabase.getInstance(context).clearFormData();
@@ -156,6 +161,10 @@ public class WebViewRequestManager {
 
                     // Load blank page before destroying
                     webView.loadUrl("about:blank");
+
+                    // Remove all callbacks
+                    webView.setWebViewClient(null);
+                    webView.setWebChromeClient(null);
 
                     // Destroy the WebView
                     webView.destroy();
@@ -169,6 +178,7 @@ public class WebViewRequestManager {
 
                 } catch (Exception e) {
                     Logger.e(TAG, "Error destroying WebView: " + e.getMessage());
+                    webView = null; // Ensure it's null even if error occurs
                 }
             });
         }
@@ -383,7 +393,7 @@ public class WebViewRequestManager {
         // Create a new WebView
         int instanceNum = webViewCreationCounter.incrementAndGet();
         currentWebViewId = "WebView-" + UUID.randomUUID().toString().substring(0, 8);
-        Logger.i(TAG, "Creating new WebView #" + instanceNum + ", ID: " + currentWebViewId);
+        Logger.i(TAG, "############# [Creating new WebView #" + instanceNum + ", ID: " + currentWebViewId + "] #############");
 
         try {
             // Create WebView with proper layout params
@@ -716,6 +726,11 @@ public class WebViewRequestManager {
         private String lastRedirectUrl = "";
         private static final int MAX_SAME_URL_REDIRECTS = 2;
 
+        // Add these fields to handle duplicate onPageFinished events
+        private String lastFinishedUrl = "";
+        private boolean isFirstPageFinished = true;
+        private boolean isIntermediateRedirect = false;
+
         public CrashResistantWebViewClient(
                 String url,
                 String currentIp,
@@ -741,6 +756,14 @@ public class WebViewRequestManager {
                 super.onPageStarted(view, url, favicon);
                 startTime = System.currentTimeMillis();
 
+                // Check if this is an intermediate redirect (Instagram's redirect page)
+                if (url.contains("l.instagram.com") || url.contains("/linkshim")) {
+                    isIntermediateRedirect = true;
+                    Logger.d(TAG, "WebView ID: " + webViewId + " - Intermediate redirect detected: " + url);
+                } else {
+                    isIntermediateRedirect = false;
+                }
+
                 if (!url.equals(initialUrl)) {
                     redirectCount++;
                     Logger.i(TAG, "-----------********** WebView ID: " + webViewId + " - Redirect #" + redirectCount + ": " + initialUrl + " -> " + url + "**********-------------");
@@ -757,9 +780,25 @@ public class WebViewRequestManager {
         public void onPageFinished(WebView view, String url) {
             try {
                 super.onPageFinished(view, url);
+
+                // Check if this is a duplicate onPageFinished call for the same URL
+                if (url.equals(lastFinishedUrl) && !isFirstPageFinished) {
+                    Logger.d(TAG, "WebView ID: " + webViewId + " - Duplicate onPageFinished ignored for: " + url + ". This likely occurs due to iframes or JavaScript navigation.");
+                    return;
+                }
+
+                lastFinishedUrl = url;
+                isFirstPageFinished = false;
+
                 long loadTime = System.currentTimeMillis() - startTime;
                 Logger.i(TAG, "WebView ID: " + webViewId + " - Page load finished: " + url + " in " + loadTime + "ms");
                 Logger.i(TAG, "WebView ID: " + webViewId + " - Total redirects: " + redirectCount);
+
+                // If this is an intermediate redirect page, don't simulate behavior yet
+                if (isIntermediateRedirect || url.contains("l.instagram.com") || url.contains("/linkshim")) {
+                    Logger.i(TAG, "WebView ID: " + webViewId + " - Intermediate redirect page, waiting for final destination");
+                    return;
+                }
 
                 // Give a short delay to ensure JavaScript has run
                 mainHandler.postDelayed(() -> {

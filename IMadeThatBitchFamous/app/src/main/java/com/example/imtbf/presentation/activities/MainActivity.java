@@ -174,6 +174,25 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
         super.onDestroy();
         // Unregister network state monitor
         networkStateMonitor.unregister();
+
+        // ADD: Cleanup handlers to prevent memory leaks
+        if (networkUpdateHandler != null) {
+            networkUpdateHandler.removeCallbacks(networkUpdateRunnable);
+        }
+        if (timeUpdateHandler != null) {
+            timeUpdateHandler.removeCallbacks(timeUpdateRunnable);
+        }
+
+        // ADD: Cleanup WebView if exists
+        if (webView != null) {
+            webView.destroy();
+            webView = null;
+        }
+
+        // ADD: Stop any running distribution
+        if (trafficDistributionManager != null && trafficDistributionManager.isRunning()) {
+            trafficDistributionManager.stopDistribution();
+        }
     }
 
     @Override
@@ -246,6 +265,9 @@ public class MainActivity extends AppCompatActivity implements TrafficDistributi
                     ", " + durationHours + " hours");
         }
     }
+
+
+
 
     /**
      * Initialize all components needed for the app.

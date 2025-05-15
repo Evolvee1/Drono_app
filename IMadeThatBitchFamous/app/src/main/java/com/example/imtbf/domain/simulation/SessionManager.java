@@ -394,7 +394,7 @@ public class SessionManager {
      * This is called by the TrafficDistributionManager when using scheduled distribution.
      * @return True if request was initiated successfully
      */
-    public boolean executeScheduledRequest() {
+    public synchronized boolean executeScheduledRequest() {
         if (scheduledRequestInProgress || !isRunning()) {
             Logger.w(TAG, "Cannot execute scheduled request: " +
                     (scheduledRequestInProgress ? "Another request in progress" : "Session not running"));

@@ -72,15 +72,11 @@ public class TimingDistributor {
      * @return Human-like interval in seconds
      */
     public int getHumanLikeIntervalSeconds() {
-        // Add debugging
         Logger.d(TAG, "Getting interval between min=" + minIntervalSeconds + " and max=" + maxIntervalSeconds);
 
-        // Ensure min and max are properly set
-        if (minIntervalSeconds <= 0) minIntervalSeconds = 1;
-        if (maxIntervalSeconds <= 0) maxIntervalSeconds = 60;
-        if (maxIntervalSeconds < minIntervalSeconds) {
-            maxIntervalSeconds = minIntervalSeconds + 1;
-        }
+        // Ensure valid bounds
+        int minInterval = Math.max(1, minIntervalSeconds);
+        int maxInterval = Math.max(minInterval + 1, maxIntervalSeconds);
 
         // Calculate interval using one of three methods
         float choice = random.nextFloat();
@@ -88,22 +84,22 @@ public class TimingDistributor {
 
         if (choice < 0.5f) {
             // Normal distribution centered between min and max
-            int mean = (minIntervalSeconds + maxIntervalSeconds) / 2;
-            int stdDev = Math.max(1, (maxIntervalSeconds - minIntervalSeconds) / 4);
-            result = (int) Math.max(minIntervalSeconds, Math.min(maxIntervalSeconds,
+            int mean = (minInterval + maxInterval) / 2;
+            int stdDev = Math.max(1, (maxInterval - minInterval) / 4);
+            result = (int) Math.max(minInterval, Math.min(maxInterval,
                     generateNormalDistribution(mean, stdDev)));
 
         } else if (choice < 0.8f) {
             // Exponential distribution for quick successive visits
-            result = (int) Math.max(minIntervalSeconds,
-                    Math.min(maxIntervalSeconds,
-                            generateExponentialDistribution(minIntervalSeconds)));
+            result = (int) Math.max(minInterval,
+                    Math.min(maxInterval,
+                            generateExponentialDistribution(minInterval)));
 
         } else {
             // Long-tail distribution for occasional long pauses
-            int mean = minIntervalSeconds + (maxIntervalSeconds - minIntervalSeconds) / 3;
-            int stdDev = Math.max(1, (maxIntervalSeconds - minIntervalSeconds) / 2);
-            result = (int) Math.max(minIntervalSeconds, Math.min(maxIntervalSeconds,
+            int mean = minInterval + (maxInterval - minInterval) / 3;
+            int stdDev = Math.max(1, (maxInterval - minInterval) / 2);
+            result = (int) Math.max(minInterval, Math.min(maxInterval,
                     generateNormalDistribution(mean, stdDev) +
                             generateExponentialDistribution(stdDev / 2)));
         }

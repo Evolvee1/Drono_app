@@ -60,7 +60,7 @@ public class AirplaneModeController {
      * Reset the state of the controller.
      * This should be called when the app starts to ensure no stuck flags.
      */
-    public void resetState() {
+    public synchronized void resetState() {
         isRotatingIp.set(false);
         Logger.d(TAG, "Reset airplane mode controller state");
     }
@@ -70,23 +70,28 @@ public class AirplaneModeController {
      * @return CompletableFuture with IP rotation result
      */
     public CompletableFuture<IpRotationResult> rotateIp() {
-        // Force reset any stuck flags
-        if (isRotatingIp.get()) {
-            Logger.w(TAG, "Forced reset of stuck rotation flag");
-            isRotatingIp.set(false);
+        synchronized (this) {
+            // Force reset any stuck flags
+            if (isRotatingIp.get()) {
+                Logger.w(TAG, "Forced reset of stuck rotation flag");
+                isRotatingIp.set(false);
+            }
+
+            // Don't allow multiple rotations at the same time
+            if (isRotatingIp.compareAndSet(false, true)) {
+                // Continue with rotation
+            } else {
+                Logger.w(TAG, "IP rotation already in progress, ignoring request");
+                return CompletableFuture.completedFuture(new IpRotationResult(
+                        false,
+                        "Unknown",
+                        "Unknown",
+                        "IP rotation already in progress",
+                        0
+                ));
+            }
         }
 
-        // Don't allow multiple rotations at the same time
-        if (isRotatingIp.get()) {
-            Logger.w(TAG, "IP rotation already in progress, ignoring request");
-            return CompletableFuture.completedFuture(new IpRotationResult(
-                    false,
-                    "Unknown",
-                    "Unknown",
-                    "IP rotation already in progress",
-                    0
-            ));
-        }
 
         return CompletableFuture.supplyAsync(() -> {
             isRotatingIp.set(true);

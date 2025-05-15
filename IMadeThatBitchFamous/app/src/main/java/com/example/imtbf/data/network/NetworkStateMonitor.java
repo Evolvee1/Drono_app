@@ -225,7 +225,7 @@ public class NetworkStateMonitor {
                 currentIpAddress.postValue("Unknown");
 
             } catch (Exception e) {
-                Logger.e(TAG, "Error fetching IP address: " + e.getMessage());
+                Logger.e(TAG, "Error fetching IP address: " + e.getMessage(), e);
                 currentIpAddress.postValue("Error");
             }
         });
